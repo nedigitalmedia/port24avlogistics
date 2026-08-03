@@ -260,7 +260,7 @@ export default function Assets() {
       a.name?.toLowerCase().includes(s) ||
       (a.barcode != null && String(a.barcode).toLowerCase().includes(s)) ||
       (a.serial_number != null && String(a.serial_number).toLowerCase().includes(s)) ||
-      (a.serial_numbers && a.serial_numbers.toLowerCase().includes(s));
+      getSerialNumbersString(a).toLowerCase().includes(s);
     const matchStatus = statusFilter === 'all' || a.status === statusFilter;
     const matchType = typeFilter === 'all' || inferItemType(a) === typeFilter;
     const matchOwnership = ownershipFilter === 'all' ||

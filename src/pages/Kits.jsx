@@ -19,6 +19,7 @@ import AddEquipmentWizard from '@/components/assets/AddEquipmentWizard';
 import ItemTypeSelectorModal from '@/components/assets/ItemTypeSelectorModal';
 import KitEditDialog from '@/components/kits/KitEditDialog';
 import AddKitInstanceDialog from '@/components/kits/AddKitInstanceDialog';
+import { getSerialNumbersString } from '@/lib/serialNumbers';
 
 const KIT_ICON = Archive; // Treasure chest / container icon
 
@@ -117,7 +118,7 @@ export default function Kits() {
         !a.kit_id &&
         (a.name?.toLowerCase().includes(addItemSearch.toLowerCase()) ||
          a.barcode?.toLowerCase().includes(addItemSearch.toLowerCase()) ||
-         a.serial_numbers?.toLowerCase().includes(addItemSearch.toLowerCase()))
+         getSerialNumbersString(a).toLowerCase().includes(addItemSearch.toLowerCase()))
       ).slice(0, 20)
     : [];
 

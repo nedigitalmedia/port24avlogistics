@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Archive, QrCode, Package, X, CheckCircle2, ArrowRight, AlertTriangle } from 'lucide-react';
+import { getSerialNumbersString } from '@/lib/serialNumbers';
 
 /**
  * Pack Into Container workflow panel.
@@ -48,7 +49,7 @@ export default function PackIntoContainerPanel({ showId }) {
         !packedItems.find(p => p.id === a.id) &&
         (a.name?.toLowerCase().includes(itemSearch.toLowerCase()) ||
          a.asset_number?.toLowerCase().includes(itemSearch.toLowerCase()) ||
-         a.serial_numbers?.toLowerCase().includes(itemSearch.toLowerCase()) ||
+         getSerialNumbersString(a).toLowerCase().includes(itemSearch.toLowerCase()) ||
          a.barcode?.toLowerCase().includes(itemSearch.toLowerCase()))
       ).slice(0, 8)
     : [];
@@ -197,8 +198,8 @@ export default function PackIntoContainerPanel({ showId }) {
                   onClick={() => addItem(a)}>
                   <Package className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                   <span className="flex-1 font-medium truncate">{a.name}</span>
-                  {(a.serial_numbers || a.asset_number) && (
-                    <span className="text-xs text-muted-foreground font-mono shrink-0">{a.serial_numbers || a.asset_number}</span>
+                  {(getSerialNumbersString(a) || a.asset_number) && (
+                    <span className="text-xs text-muted-foreground font-mono shrink-0">{getSerialNumbersString(a) || a.asset_number}</span>
                   )}
                   <span className="text-xs text-primary shrink-0">+ Pack</span>
                 </button>
@@ -215,8 +216,8 @@ export default function PackIntoContainerPanel({ showId }) {
                   <div key={a.id} className="flex items-center gap-2 p-2 rounded-lg border bg-card">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                     <span className="flex-1 text-sm font-medium truncate">{a.name}</span>
-                    {(a.serial_numbers || a.asset_number) && (
-                      <span className="text-xs text-muted-foreground font-mono">{a.serial_numbers || a.asset_number}</span>
+                    {(getSerialNumbersString(a) || a.asset_number) && (
+                      <span className="text-xs text-muted-foreground font-mono">{getSerialNumbersString(a) || a.asset_number}</span>
                     )}
                     <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
                       onClick={() => removeItem(a.id)}>

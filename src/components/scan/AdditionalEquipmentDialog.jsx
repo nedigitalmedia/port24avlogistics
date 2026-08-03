@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getSerialNumbersString } from '@/lib/serialNumbers';
 
 export default function AdditionalEquipmentDialog({ open, onOpenChange, asset, show, subLocations, onSuccess }) {
   const [selectedSubLocationId, setSelectedSubLocationId] = useState('');
@@ -29,7 +30,7 @@ export default function AdditionalEquipmentDialog({ open, onOpenChange, asset, s
         asset_id: asset.id,
         asset_name: asset.name,
         asset_barcode: asset.barcode || '',
-        serial_number: asset.serial_number || asset.serial_numbers || '',
+        serial_number: asset.serial_number || getSerialNumbersString(asset),
         requested_quantity: 1,
         sub_location_id: selectedSubLocationId || null,
         sub_location_name: subLoc?.name || '',
@@ -76,8 +77,8 @@ export default function AdditionalEquipmentDialog({ open, onOpenChange, asset, s
           <div className="p-3 rounded-lg bg-muted">
             <p className="text-sm font-medium">{asset.name}</p>
             {asset.barcode && <p className="text-xs text-muted-foreground font-mono mt-1 break-all">{asset.barcode}</p>}
-            {(asset.serial_number || asset.serial_numbers) && (
-              <p className="text-xs text-muted-foreground font-mono mt-1 break-all">{asset.serial_number || asset.serial_numbers}</p>
+            {(asset.serial_number || getSerialNumbersString(asset)) && (
+              <p className="text-xs text-muted-foreground font-mono mt-1 break-all">{asset.serial_number || getSerialNumbersString(asset)}</p>
             )}
           </div>
 

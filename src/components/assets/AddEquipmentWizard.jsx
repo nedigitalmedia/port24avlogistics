@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import QRLabelPrinter from '@/components/assets/QRLabelPrinter';
 import { generateNextCode, useCodeSettings, getMergedSettings, buildCode, previewCode } from '@/lib/useAutoCode';
+import { getSerialNumbersArray, getSerialNumbersString } from '@/lib/serialNumbers';
 
 // ─── Item Type Definitions ───────────────────────────────────────────────────
 const ITEM_TYPES = [
@@ -923,7 +924,7 @@ function StepCloudContents({ form, set, allAssets }) {
     ? allAssets.filter(a =>
         !linked.includes(a.id) &&
         (a.name?.toLowerCase().includes(search.toLowerCase()) ||
-         a.serial_numbers?.toLowerCase().includes(search.toLowerCase()))
+         getSerialNumbersString(a).toLowerCase().includes(search.toLowerCase()))
       ).slice(0, 8)
     : [];
 
@@ -962,7 +963,7 @@ function StepCloudContents({ form, set, allAssets }) {
                 onClick={() => { set('linked_asset_ids', [...linked, a.id]); setSearch(''); }}>
                 <Package className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 <span className="flex-1 font-medium">{a.name}</span>
-                <span className="text-xs text-muted-foreground font-mono">{a.serial_numbers || a.barcode || ''}</span>
+                <span className="text-xs text-muted-foreground font-mono">{getSerialNumbersString(a) || a.barcode || ''}</span>
               </button>
             ))}
           </div>
@@ -978,11 +979,6 @@ function StepKitContents({ form, set, allAssets }) {
   const [search, setSearch] = useState('');
   const kitContents = form.kit_contents || [];
 
-  function parseSerials(s) {
-    if (!s) return [];
-    return s.split(/[,\n]/).map(x => x.trim()).filter(Boolean);
-  }
-
   const linkedKeys = new Set(kitContents.map(e => e.serial ? `${e.asset_id}::${e.serial}` : e.asset_id));
 
   const buildSearchRows = () => {
@@ -990,7 +986,7 @@ function StepKitContents({ form, set, allAssets }) {
     if (q.length < 2) return [];
     const rows = [];
     for (const a of allAssets) {
-      const serials = parseSerials(a.serial_numbers);
+      const serials = getSerialNumbersArray(a);
       if (!serials.length) {
         const key = a.id;
         if (a.name?.toLowerCase().includes(q) || a.barcode?.toLowerCase().includes(q) || a.category?.toLowerCase().includes(q)) {

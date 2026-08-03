@@ -7,6 +7,8 @@
  * All layout/design comes from our block_config elements via buildPrintHTML.
  */
 
+import { getSerialNumbersString } from './serialNumbers';
+
 export const LABEL_SIZES = [
   { id: 'dymo_30252', label: 'Dymo 30252 — Address (89×28mm)', w: 89, h: 28 },
   { id: 'dymo_30336', label: 'Dymo 30336 — Square (51×51mm)',  w: 51, h: 51 },
@@ -35,7 +37,7 @@ export function buildPrintHTML(elements, size, asset, brand, qrDataConfig = {}) 
      const fields = qrDataConfig.fields || ['serial_numbers'];
      const separator = qrDataConfig.separator || '|';
      return fields
-       .map(f => asset?.[f] || '')
+       .map(f => f === 'serial_numbers' ? getSerialNumbersString(asset) : (asset?.[f] || ''))
        .filter(v => v !== '')
        .join(separator);
    };
@@ -45,8 +47,9 @@ export function buildPrintHTML(elements, size, asset, brand, qrDataConfig = {}) 
     if (!el.field) return el.value || '';
     if (el.field === 'barcode') {
       // 'barcode' element = primary scan identifier: kit code or first serial
-      return asset?.barcode || asset?.serial_numbers || asset?.serial_number || '';
+      return asset?.barcode || getSerialNumbersString(asset);
     }
+    if (el.field === 'serial_numbers') return getSerialNumbersString(asset);
     return asset?.[el.field] || '';
   };
 
@@ -59,7 +62,7 @@ export function buildPrintHTML(elements, size, asset, brand, qrDataConfig = {}) 
 
     if (el.type === 'qr') {
       const sz = Math.min(w, h);
-      const code = buildQRData() || asset?.serial_numbers || asset?.serial_number || asset?.barcode || asset?.id || 'SAMPLE';
+      const code = buildQRData() || getSerialNumbersString(asset) || asset?.barcode || asset?.id || 'SAMPLE';
       return `<div data-qr="${code}" data-size="${sz}" style="${base}display:inline-block;"></div>`;
     }
 
@@ -213,13 +216,13 @@ function openFallbackPrint(asset, size, qrDataConfig = {}) {
      const fields = qrDataConfig.fields || ['serial_numbers'];
      const separator = qrDataConfig.separator || '|';
      return fields
-       .map(f => asset?.[f] || '')
+       .map(f => f === 'serial_numbers' ? getSerialNumbersString(asset) : (asset?.[f] || ''))
        .filter(v => v !== '')
        .join(separator);
    };
 
    // QR encodes the asset's serial number (primary identity), never the disconnected barcode field
-   const code = buildQRData() || asset.serial_numbers || asset.serial_number || asset.id || 'UNKNOWN';
+   const code = buildQRData() || getSerialNumbersString(asset) || asset.id || 'UNKNOWN';
 
   const html = `<!DOCTYPE html><html><head><title>Label</title>
   <style>
