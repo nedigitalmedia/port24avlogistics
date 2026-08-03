@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Check, QrCode } from 'lucide-react';
 import QRLabelPrinter from './QRLabelPrinter';
+import { getSerialNumbersString } from '@/lib/serialNumbers';
 
 import Step1ItemType from './wizard/Step1ItemType';
 import Step2ProductDetails from './wizard/Step2ProductDetails';
@@ -109,6 +110,7 @@ export default function AssetFormDialog({ open, onOpenChange, asset }) {
         asset_number: asset.asset_number || '',
         barcode: asset.barcode || '',
         serial_number: asset.serial_number || '',
+        serial_numbers: getSerialNumbersString(asset),
         category: asset.category || '',
         manufacturer: asset.manufacturer || '',
         model: asset.model || '',
