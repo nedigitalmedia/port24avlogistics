@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { db } from '@/api/db';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Filter, Trash2, Pencil, Package, PanelLeftClose, PanelLeft, QrCode, Printer, Cloud, PackageOpen, ShoppingCart, Building2 } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, Pencil, Package, PanelLeftClose, PanelLeft, QrCode, Printer, Cloud, PackageOpen, ShoppingCart, Building2, ChevronRight, ChevronDown } from 'lucide-react';
 import PartnerOwnershipBadge from '@/components/assets/PartnerOwnershipBadge';
 import { ITEM_TYPES, getItemTypeLabel, inferItemType } from '@/lib/itemTypes';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +45,12 @@ export default function Assets() {
   const [barcodeModalAsset, setBarcodeModalAsset] = useState(null);
   const [barcodeModalSerial, setBarcodeModalSerial] = useState(null);
   const [columns, setColumns] = useState(DEFAULT_COLUMNS);
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
+  const toggleGroup = (name) => setExpandedGroups(prev => {
+    const next = new Set(prev);
+    next.has(name) ? next.delete(name) : next.add(name);
+    return next;
+  });
   const queryClient = useQueryClient();
 
   const handleColResize = useCallback((key, width) => {
@@ -71,6 +77,121 @@ export default function Assets() {
     if (t === 'physical_kit') return <PackageOpen className="w-4 h-4 text-amber-500" title="Physical Kit" />;
     if (t === 'consumable') return <ShoppingCart className="w-4 h-4 text-emerald-400" title="Consumable" />;
     return <Package className="w-4 h-4 text-muted-foreground" title="Physical Item" />;
+  }
+
+  // Renders a single asset/kit row — used both standalone (name group of one)
+  // and nested under an expanded name group's parent row.
+  function renderAssetRow(asset, { indent } = {}) {
+    return (
+      <tr
+        key={asset.id}
+        className={cn("border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors", selectedIds.has(asset.id) && "bg-primary/5")}
+        onDoubleClick={() => {
+          if (asset._isKit) {
+            setEditingKit(asset);
+            setKitEditOpen(true);
+          } else {
+            setEditingAsset(asset);
+            setFormOpen(true);
+          }
+        }}
+      >
+        <td className="px-2 py-2.5 w-8" onClick={e => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            className="cursor-pointer"
+            checked={selectedIds.has(asset.id)}
+            onChange={e => {
+              const next = new Set(selectedIds);
+              e.target.checked ? next.add(asset.id) : next.delete(asset.id);
+              setSelectedIds(next);
+            }}
+          />
+        </td>
+        {vis('type') && (
+          <td className="px-2 py-2.5 text-center" style={{ width: col('type').width }}>
+            <div className="flex items-center justify-center"><TypeIcon asset={asset} /></div>
+          </td>
+        )}
+        {vis('typeLabel') && (
+          <td className="px-2 py-2.5 text-xs text-muted-foreground truncate" style={{ width: col('typeLabel').width }}>
+            {getItemTypeLabel(inferItemType(asset))}
+          </td>
+        )}
+        {vis('name') && (
+          <td className="px-2 py-2.5 font-medium" style={{ width: col('name').width }}>
+            <div className={cn("flex flex-col gap-0.5 truncate", indent && "pl-5")}>
+              <span className="truncate">{asset.name}</span>
+              <PartnerOwnershipBadge asset={asset} size="sm" />
+            </div>
+          </td>
+        )}
+        {vis('serial') && (
+          <td className="px-2 py-2.5 text-muted-foreground" style={{ width: col('serial').width }}>
+            <SerialNumbersDisplay serialNumbers={getSerialNumbersString(asset)} />
+          </td>
+        )}
+        {vis('category') && (
+          <td className="px-2 py-2.5" style={{ width: col('category').width }}>
+            {asset.category ? (
+              <button
+                className="text-sm text-muted-foreground hover:text-primary transition-colors truncate max-w-full"
+                onClick={() => {
+                  const cat = categories.find(c => c.name === asset.category);
+                  if (cat) setSelectedCategoryId(cat.id);
+                }}
+              >
+                {asset.category}
+              </button>
+            ) : <span className="text-muted-foreground/50 text-xs">—</span>}
+          </td>
+        )}
+        {vis('status')    && <td className="px-2 py-2.5" style={{ width: col('status').width }}><StatusBadge status={asset.status} /></td>}
+        {vis('condition') && <td className="px-2 py-2.5" style={{ width: col('condition').width }}><StatusBadge status={asset.condition} /></td>}
+        {vis('location')  && <td className="px-2 py-2.5 text-sm text-muted-foreground truncate" style={{ width: col('location').width }}>{asset.location || '—'}</td>}
+        <td className="px-2 py-2.5 w-24" onClick={e => e.stopPropagation()}>
+          <div className="flex gap-1">
+            {!asset._isKit && (asset.serial_numbers || asset.serial_number || asset.id) && (
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" title="Show / Print Barcode" onClick={() => setBarcodeModalAsset(asset)}>
+                <QrCode className="w-3.5 h-3.5" />
+              </Button>
+            )}
+            {canManageEquipment && (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                if (asset._isKit) {
+                  setEditingKit(asset);
+                  setKitEditOpen(true);
+                } else {
+                  setEditingAsset(asset);
+                  setFormOpen(true);
+                }
+              }}>
+                <Pencil className="w-3.5 h-3.5" />
+              </Button>
+            )}
+            {canManageEquipment && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Asset</AlertDialogTitle>
+                    <AlertDialogDescription>Delete "{asset.name}"? This cannot be undone.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteMutation.mutate(asset)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
   }
 
   // Merge kits into the equipment list as virtual rows
@@ -153,6 +274,18 @@ export default function Assets() {
     }
     return matchSearch && matchStatus && matchType && matchCat && matchOwnership;
   });
+
+  // Group by exact name — a group with one item renders as a plain row;
+  // a group with multiple items renders as an expandable parent with its
+  // individual units listed underneath.
+  const groupedList = useMemo(() => {
+    const map = new Map();
+    for (const item of filtered) {
+      if (!map.has(item.name)) map.set(item.name, []);
+      map.get(item.name).push(item);
+    }
+    return Array.from(map.entries()).map(([name, items]) => ({ name, items }));
+  }, [filtered]);
 
   const openAddCat = (parentId) => { setEditingCat(null); setNewCatParentId(parentId); setCatDialogOpen(true); };
   const openEditCat = (cat) => { setEditingCat(cat); setNewCatParentId(cat.parent_id); setCatDialogOpen(true); };
@@ -299,116 +432,63 @@ export default function Assets() {
                       <p className="text-muted-foreground">No assets found</p>
                     </td>
                   </tr>
-                ) : filtered.map(asset => (
-                  <tr
-                    key={asset.id}
-                    className={cn("border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors", selectedIds.has(asset.id) && "bg-primary/5")}
-                    onDoubleClick={() => {
-                      if (asset._isKit) {
-                        setEditingKit(asset);
-                        setKitEditOpen(true);
-                      } else {
-                        setEditingAsset(asset);
-                        setFormOpen(true);
-                      }
-                    }}
-                  >
-                    <td className="px-2 py-2.5 w-8" onClick={e => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        className="cursor-pointer"
-                        checked={selectedIds.has(asset.id)}
-                        onChange={e => {
-                          const next = new Set(selectedIds);
-                          e.target.checked ? next.add(asset.id) : next.delete(asset.id);
-                          setSelectedIds(next);
-                        }}
-                      />
-                    </td>
-                    {vis('type') && (
-                      <td className="px-2 py-2.5 text-center" style={{ width: col('type').width }}>
-                        <div className="flex items-center justify-center"><TypeIcon asset={asset} /></div>
-                      </td>
-                    )}
-                    {vis('typeLabel') && (
-                      <td className="px-2 py-2.5 text-xs text-muted-foreground truncate" style={{ width: col('typeLabel').width }}>
-                        {getItemTypeLabel(inferItemType(asset))}
-                      </td>
-                    )}
-                    {vis('name') && (
-                      <td className="px-2 py-2.5 font-medium" style={{ width: col('name').width }}>
-                        <div className="flex flex-col gap-0.5 truncate">
-                          <span className="truncate">{asset.name}</span>
-                          <PartnerOwnershipBadge asset={asset} size="sm" />
-                        </div>
-                      </td>
-                    )}
-                    {vis('serial') && (
-                      <td className="px-2 py-2.5 text-muted-foreground" style={{ width: col('serial').width }}>
-                        <SerialNumbersDisplay serialNumbers={getSerialNumbersString(asset)} />
-                      </td>
-                    )}
-                    {vis('category') && (
-                      <td className="px-2 py-2.5" style={{ width: col('category').width }}>
-                        {asset.category ? (
-                          <button
-                            className="text-sm text-muted-foreground hover:text-primary transition-colors truncate max-w-full"
-                            onClick={() => {
-                              const cat = categories.find(c => c.name === asset.category);
-                              if (cat) setSelectedCategoryId(cat.id);
+                ) : groupedList.map(({ name, items }) => {
+                  if (items.length === 1) {
+                    return renderAssetRow(items[0]);
+                  }
+                  const isExpanded = expandedGroups.has(name);
+                  const first = items[0];
+                  const allSelected = items.every(a => selectedIds.has(a.id));
+                  const someSelected = !allSelected && items.some(a => selectedIds.has(a.id));
+                  return (
+                    <React.Fragment key={name}>
+                      <tr
+                        className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors bg-muted/10"
+                        onClick={() => toggleGroup(name)}
+                      >
+                        <td className="px-2 py-2.5 w-8" onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            className="cursor-pointer"
+                            checked={allSelected}
+                            ref={el => { if (el) el.indeterminate = someSelected; }}
+                            onChange={e => {
+                              const next = new Set(selectedIds);
+                              items.forEach(a => e.target.checked ? next.add(a.id) : next.delete(a.id));
+                              setSelectedIds(next);
                             }}
-                          >
-                            {asset.category}
-                          </button>
-                        ) : <span className="text-muted-foreground/50 text-xs">—</span>}
-                      </td>
-                    )}
-                    {vis('status')    && <td className="px-2 py-2.5" style={{ width: col('status').width }}><StatusBadge status={asset.status} /></td>}
-                    {vis('condition') && <td className="px-2 py-2.5" style={{ width: col('condition').width }}><StatusBadge status={asset.condition} /></td>}
-                    {vis('location')  && <td className="px-2 py-2.5 text-sm text-muted-foreground truncate" style={{ width: col('location').width }}>{asset.location || '—'}</td>}
-                    <td className="px-2 py-2.5 w-24" onClick={e => e.stopPropagation()}>
-                      <div className="flex gap-1">
-                        {!asset._isKit && (asset.serial_numbers || asset.serial_number || asset.id) && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" title="Show / Print Barcode" onClick={() => setBarcodeModalAsset(asset)}>
-                            <QrCode className="w-3.5 h-3.5" />
-                          </Button>
+                          />
+                        </td>
+                        {vis('type') && (
+                          <td className="px-2 py-2.5 text-center" style={{ width: col('type').width }}>
+                            <div className="flex items-center justify-center"><TypeIcon asset={first} /></div>
+                          </td>
                         )}
-                        {canManageEquipment && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
-                            if (asset._isKit) {
-                              setEditingKit(asset);
-                              setKitEditOpen(true);
-                            } else {
-                              setEditingAsset(asset);
-                              setFormOpen(true);
-                            }
-                          }}>
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
+                        {vis('typeLabel') && (
+                          <td className="px-2 py-2.5 text-xs text-muted-foreground truncate" style={{ width: col('typeLabel').width }}>
+                            {getItemTypeLabel(inferItemType(first))}
+                          </td>
                         )}
-                        {canManageEquipment && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Asset</AlertDialogTitle>
-                                <AlertDialogDescription>Delete "{asset.name}"? This cannot be undone.</AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => deleteMutation.mutate(asset)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                        {vis('name') && (
+                          <td className="px-2 py-2.5 font-medium" style={{ width: col('name').width }}>
+                            <div className="flex items-center gap-1.5 truncate">
+                              {isExpanded ? <ChevronDown className="w-3.5 h-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />}
+                              <span className="truncate">{name}</span>
+                              <Badge variant="outline" className="text-xs shrink-0">{items.length}</Badge>
+                            </div>
+                          </td>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        {vis('serial')    && <td className="px-2 py-2.5 text-xs text-muted-foreground" style={{ width: col('serial').width }}>{items.length} units</td>}
+                        {vis('category')  && <td className="px-2 py-2.5 text-sm text-muted-foreground truncate" style={{ width: col('category').width }}>{first.category || '—'}</td>}
+                        {vis('status')    && <td className="px-2 py-2.5" style={{ width: col('status').width }} />}
+                        {vis('condition') && <td className="px-2 py-2.5" style={{ width: col('condition').width }} />}
+                        {vis('location')  && <td className="px-2 py-2.5" style={{ width: col('location').width }} />}
+                        <td className="px-2 py-2.5 w-24" />
+                      </tr>
+                      {isExpanded && items.map(asset => renderAssetRow(asset, { indent: true }))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
