@@ -353,7 +353,7 @@ function StepProductDetails({ form, set, categories, mode }) {
 }
 
 // ─── Step: Tracking Setup (Physical Items) ────────────────────────────────────
-function StepTracking({ form, set }) {
+function StepTracking({ form, set, allAssets = [] }) {
   const previewSerials = () => {
     const prefix = form.auto_prefix || '';
     const start = parseInt(form.auto_start || '1', 10);
@@ -363,6 +363,14 @@ function StepTracking({ form, set }) {
   };
 
   const preview = form.tracking_mode === 'auto' ? previewSerials() : [];
+
+  // Warn if this barcode already belongs to an existing asset — the wizard only
+  // creates new items, so scanning a known tag here would otherwise silently
+  // create a duplicate instead of showing the item's existing data.
+  const scannedBarcode = form.barcode?.trim().toLowerCase();
+  const barcodeMatch = scannedBarcode
+    ? allAssets.find(a => a.barcode?.trim().toLowerCase() === scannedBarcode)
+    : null;
 
   return (
     <div className="space-y-5">
@@ -497,6 +505,13 @@ function StepTracking({ form, set }) {
             </Label>
             <Input value={form.barcode || ''} onChange={e => set('barcode', e.target.value)}
               placeholder="e.g. short scan code or same as asset number" />
+            {barcodeMatch && (
+              <p className="text-xs text-destructive mt-1.5">
+                ⚠ This barcode already belongs to <strong>"{barcodeMatch.name}"</strong>
+                {barcodeMatch.serial_number ? ` (Serial: ${barcodeMatch.serial_number})` : ''}.
+                Saving here will create a duplicate — close this wizard and use Edit on the existing item instead.
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -1409,13 +1424,15 @@ export default function AddEquipmentWizard({ open, onOpenChange, initialType }) 
         serialNumbers = form.serial_numbers || '';
       }
 
-      // Auto-generate asset_number from admin code settings if blank
-      let assetNumber = form.asset_number?.trim() || null;
+      // Internal asset number: use what was typed, else reuse the scanned/typed barcode
+      // (the barcode already IS the tracking ID in practice), else auto-generate one.
+      let barcode = form.barcode?.trim() || undefined;
+      let assetNumber = form.asset_number?.trim() || barcode || null;
       if (!assetNumber) {
         const codeType = item_type === 'consumable' ? 'consumable' : item_type === 'bulk' ? 'bulk' : 'physical_item';
         assetNumber = await generateNextCode(codeType);
       }
-      let barcode = form.barcode?.trim() || assetNumber || undefined;
+      if (!barcode) barcode = assetNumber;
 
       const payload = {
         name: form.name, item_type, category: form.category || undefined,
