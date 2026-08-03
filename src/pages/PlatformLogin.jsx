@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/api/supabaseClient';
 import { Eye, EyeOff, ArrowRight, Loader2, ShieldCheck } from 'lucide-react';
@@ -23,6 +23,45 @@ export default function PlatformLogin() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Handles the return trip from Google OAuth — a full page redirect back to this
+  // route, so (unlike the email path below) there's no in-memory navigate() to rely on.
+  useEffect(() => {
+    const init = async () => {
+      const hash = window.location.hash;
+      if (hash.includes('error=')) {
+        const params = new URLSearchParams(hash.replace(/^#/, ''));
+        const desc = params.get('error_description') || params.get('error') || 'Google sign-in failed.';
+        setError(decodeURIComponent(desc.replace(/\+/g, ' ')));
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const normalizedEmail = session.user.email?.toLowerCase();
+      if (PLATFORM_ADMIN_EMAILS.includes(normalizedEmail)) {
+        await supabase.from('users').upsert(
+          { id: session.user.id, email: session.user.email, is_platform_admin: true, role: 'admin', org_id: null },
+          { onConflict: 'id' }
+        );
+        sessionStorage.removeItem('port24_login_source');
+        navigate('/platform', { replace: true });
+        return;
+      }
+
+      const { data: profile } = await supabase.from('users').select('is_platform_admin').eq('id', session.user.id).single();
+      if (profile?.is_platform_admin) {
+        sessionStorage.removeItem('port24_login_source');
+        navigate('/platform', { replace: true });
+      } else {
+        await supabase.auth.signOut();
+        setError('Access denied. This portal is for Port 24 staff only.');
+      }
+    };
+    init();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -158,6 +197,46 @@ export default function PlatformLogin() {
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><span>Access Platform</span><ArrowRight className="w-4 h-4" /></>}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px" style={{ backgroundColor: BORDER_DIM }} />
+            <span className="text-xs" style={{ color: TEXT_MUTED }}>or</span>
+            <div className="flex-1 h-px" style={{ backgroundColor: BORDER_DIM }} />
+          </div>
+
+          {/* Google sign-in */}
+          <button
+            type="button"
+            onClick={async () => {
+              setError('');
+              // Tag this login as platform_admin BEFORE the redirect so AuthContext knows,
+              // on return, to skip company-membership routing entirely (see AuthContext.loadProfile).
+              sessionStorage.setItem('port24_login_source', 'platform_admin');
+              // Sign out any stale session first so a failed/cancelled OAuth doesn't auto-login the old account
+              await supabase.auth.signOut();
+              await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: `${window.location.origin}/platform/login` },
+              });
+            }}
+            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl text-sm font-medium transition-all"
+            style={{
+              backgroundColor: '#060A10',
+              border: `1px solid ${BORDER_DIM}`,
+              color: '#fff',
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = BORDER_DIM}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+              <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+              <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+            </svg>
+            Continue with Google
+          </button>
         </div>
 
         {/* Back to main site */}
