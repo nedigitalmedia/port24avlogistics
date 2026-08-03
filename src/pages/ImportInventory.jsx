@@ -425,6 +425,8 @@ export default function ImportInventory() {
       if (staged.importAction === 'skip') { skipped++; continue; }
       if (staged.importAction === 'flag_review') { flagged++; continue; }
 
+      try {
+
       // ── Kit import (Cloud Kit or Serialized Kit) ──────────────────────────
       if (itemType === 'cloud_kit' || itemType === 'serialized_kit') {
         const kitRec = {
@@ -484,8 +486,12 @@ export default function ImportInventory() {
           baseRec.tracking = 'serialized';
           baseRec.quantity = 1;
 
-          for (const serial of serials) {
+          for (const [serialIdx, serial] of serials.entries()) {
             const assetRec = { ...baseRec, serial_number: serial };
+            // barcode/asset_number are UNIQUE columns — the sheet only gives one code per
+            // row, so only the first expanded unit can keep it; the rest get assigned later
+            // via the Assign Barcodes page.
+            if (serialIdx > 0) { delete assetRec.barcode; delete assetRec.asset_number; }
             if (staged.importAction === 'update' && staged.duplicateId && serial === serials[0]) {
               await apiCall(() => db.entities.Asset.update(staged.duplicateId, assetRec));
               updated++;
@@ -517,6 +523,11 @@ export default function ImportInventory() {
           await apiCall(() => db.entities.Asset.create(rawRec));
           success++;
         }
+      }
+
+      } catch (err) {
+        failed++;
+        errors.push(`Row ${staged.row_index + 1}: ${err?.message || 'Import failed'}`);
       }
 
       await sleep(200);
