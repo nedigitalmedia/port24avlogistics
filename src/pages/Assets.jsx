@@ -89,8 +89,8 @@ export default function Assets() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => db.entities.Asset.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['assets'] }),
+    mutationFn: (asset) => asset._isKit ? db.entities.Kit.delete(asset.id) : db.entities.Asset.delete(asset.id),
+    onSuccess: (_, asset) => queryClient.invalidateQueries({ queryKey: [asset._isKit ? 'kits' : 'assets'] }),
   });
 
   const saveCatMutation = useMutation({
@@ -399,7 +399,7 @@ export default function Assets() {
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => deleteMutation.mutate(asset.id)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                                <AlertDialogAction onClick={() => deleteMutation.mutate(asset)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
