@@ -20,6 +20,7 @@ import QRLabelPrinter from '@/components/assets/QRLabelPrinter';
 import KitEditDialog from '@/components/kits/KitEditDialog';
 import { usePermissions } from '@/lib/usePermissions';
 import SerialNumbersDisplay from '@/components/assets/SerialNumbersDisplay';
+import { getSerialNumbersString } from '@/lib/serialNumbers';
 import AssetBarcodeModal from '@/components/assets/AssetBarcodeModal';
 import { ColumnToggle, ResizableHead, DEFAULT_COLUMNS } from '@/components/assets/ColumnManager';
 
@@ -344,7 +345,7 @@ export default function Assets() {
                     )}
                     {vis('serial') && (
                       <td className="px-2 py-2.5 text-muted-foreground" style={{ width: col('serial').width }}>
-                        <SerialNumbersDisplay serialNumbers={asset.serial_numbers || asset.serial_number} />
+                        <SerialNumbersDisplay serialNumbers={getSerialNumbersString(asset)} />
                       </td>
                     )}
                     {vis('category') && (

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { getSerialNumbersArray } from '@/lib/serialNumbers';
 
 // Direct DB lookup — fetches fresh from server each time, bypasses all cache/state issues.
 // Searches barcode, serial_number, and serial_numbers (comma list).
@@ -40,8 +41,8 @@ async function lookupAssetByCode(rawCode) {
 
   // Search serial_numbers (comma-separated list)
   found = allAssets.find(a => {
-    if (!a.serial_numbers) return false;
-    return a.serial_numbers.split(',').map(s => s.trim().toLowerCase()).includes(valLower);
+    const serials = getSerialNumbersArray(a);
+    return serials.length > 0 && serials.map(s => s.toLowerCase()).includes(valLower);
   });
   if (found) {
     console.log('[AssetLookup] matched on serial_numbers field:', found.serial_numbers, '->', found.name);

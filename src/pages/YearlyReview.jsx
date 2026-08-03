@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import PageHeader from '@/components/shared/PageHeader';
+import { getSerialNumbersArray } from '@/lib/serialNumbers';
 
 const REVIEW_TYPES = [
   { value: 'annual',          label: 'Annual Review' },
@@ -118,7 +119,7 @@ export default function AssetReviewPortal() {
             // Build a combined identifier string: serial_numbers (comma-sep) + barcode
             // so scanning ANY individual serial OR the barcode tag will match
             const identifiers = [
-              ...(a.serial_numbers ? a.serial_numbers.split(',').map(s => s.trim()).filter(Boolean) : []),
+              ...getSerialNumbersArray(a),
               ...(a.barcode ? [a.barcode.trim()] : []),
             ];
             return {

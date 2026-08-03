@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { usePermissions } from '@/lib/usePermissions';
 import { isScannable } from '@/lib/itemTypes';
 import { useStatusFlow } from '@/lib/useStatusFlow';
+import { getSerialNumbersArray } from '@/lib/serialNumbers';
 
 // ── Stage definitions ─────────────────────────────────────────────────────────
 // 3 operational stages: Pick → Send (on truck, LOCKED) → Return
@@ -390,7 +391,7 @@ export default function Scan() {
     // Barcode is a legacy scan alias and is checked last.
     return (
       assets.find(a => a.id === code.trim()) ||
-      assets.find(a => a.serial_numbers && a.serial_numbers.split(',').some(s => s.trim().toLowerCase() === t)) ||
+      assets.find(a => getSerialNumbersArray(a).some(s => s.toLowerCase() === t)) ||
       assets.find(a => a.serial_number && a.serial_number.toLowerCase() === t) ||
       assets.find(a => a.barcode && a.barcode.toLowerCase() === t) ||
       null
@@ -472,7 +473,7 @@ export default function Scan() {
           show_id: selectedShowId, show_name: selectedShow?.name,
           requirement_id: requirement?.id || null, asset_id: asset.id,
           asset_name: asset.name, asset_barcode: asset.barcode,
-          asset_serial: asset.serial_number || (asset.serial_numbers ? asset.serial_numbers.split(',')[0].trim() : ''),
+          asset_serial: asset.serial_number || getSerialNumbersArray(asset)[0] || '',
           room_id: requirement?.room_id || asset.current_sub_location_id || null,
           room_name: requirement?.room_name || asset.current_sub_location_name || null,
           movement_state: 'picked', scanned_by: user?.email || '', scanned_at: now,
@@ -578,7 +579,7 @@ export default function Scan() {
         show_id: selectedShowId, show_name: selectedShow?.name,
         requirement_id: null, asset_id: asset.id,
         asset_name: asset.name, asset_barcode: asset.barcode,
-        asset_serial: asset.serial_number || (asset.serial_numbers ? asset.serial_numbers.split(',')[0].trim() : ''),
+        asset_serial: asset.serial_number || getSerialNumbersArray(asset)[0] || '',
         room_id: request.sub_location_id || null,
         room_name: request.sub_location_name || null,
         movement_state: 'picked', scanned_by: request.requested_by || '', scanned_at: request.scanned_at || now,

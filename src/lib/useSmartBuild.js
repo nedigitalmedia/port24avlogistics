@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { db } from '@/api/db';
 import { buildFallbackDraft } from './smartBuildRules';
+import { getSerialNumbersArray } from './serialNumbers';
 
 /**
  * Smart Project Builder hook.
@@ -47,7 +48,7 @@ export function useSmartBuild() {
             a.category || 'Misc',
             `qty:${a.quantity || 1}`,
             `$${a.daily_rate || 0}/day`,
-            a.serial_numbers ? `sn:${a.serial_numbers.split(',')[0]?.trim()}` : '',
+            getSerialNumbersArray(a)[0] ? `sn:${getSerialNumbersArray(a)[0]}` : '',
           ].filter(Boolean);
           return parts.join(' | ');
         })

@@ -169,30 +169,23 @@ export default function QRLabelPrinter({ open, onOpenChange, assets = [] }) {
   const selectedAsset = selectedAssetId ? assets.find(a => a.id === selectedAssetId) : null;
   
   // Parse serial numbers from selected asset
-  const getSerialNumbers = (asset) => {
-    if (!asset) return [];
-    const serials = asset.serial_numbers || asset.serial_number || '';
-    if (!serials) return [];
-    return serials.split(',').map(s => s.trim()).filter(s => s.length > 0);
-  };
-  
-  const availableSerials = selectedAsset ? getSerialNumbers(selectedAsset) : [];
+  const availableSerials = selectedAsset ? getSerialNumbersArray(selectedAsset) : [];
   const hasMultipleSerials = availableSerials.length > 1;
-  
+
   // Create asset variant with only selected serial number for printing
   // The QR scan value is always serial → id, never the disconnected barcode field
   const printAssets = selectedAsset
     ? [
         {
           ...selectedAsset,
-          serial_numbers: selectedSerialNumber || availableSerials[0] || selectedAsset.serial_numbers || selectedAsset.serial_number || selectedAsset.id,
+          serial_numbers: selectedSerialNumber || availableSerials[0] || selectedAsset.id,
           serial_number: selectedSerialNumber || availableSerials[0] || selectedAsset.serial_number || selectedAsset.id,
         }
       ]
     : (selectedAssetId ? [] : assets.map(a => ({
         ...a,
-        serial_numbers: a.serial_numbers || a.serial_number || a.id,
-        serial_number: a.serial_number || a.serial_numbers?.split(',')[0]?.trim() || a.id,
+        serial_numbers: getSerialNumbersArray(a)[0] || a.id,
+        serial_number: a.serial_number || getSerialNumbersArray(a)[0] || a.id,
       })));
 
   // Use template's size if available, otherwise fallback
@@ -242,7 +235,7 @@ export default function QRLabelPrinter({ open, onOpenChange, assets = [] }) {
               </SelectTrigger>
               <SelectContent>
                 {assets.map(a => {
-                  const serial = a.serial_numbers?.split(',')[0]?.trim() || a.serial_number || a.id;
+                  const serial = getSerialNumbersArray(a)[0] || a.serial_number || a.id;
                   return (
                     <SelectItem key={a.id} value={a.id}>
                       {serial} — {a.name}

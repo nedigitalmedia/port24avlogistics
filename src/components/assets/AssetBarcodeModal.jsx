@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Printer, QrCode, Tag, MapPin, LayoutGrid } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getSerialNumbersArray } from '@/lib/serialNumbers';
 
 /**
  * Quick-view barcode modal for a single asset.
@@ -16,11 +17,7 @@ export default function AssetBarcodeModal({ open, onOpenChange, asset, onPrintLa
   const [selectedSerial, setSelectedSerial] = useState(null);
 
   // Parse all serial numbers from asset
-  const serials = React.useMemo(() => {
-    if (!asset) return [];
-    const raw = asset.serial_numbers || asset.serial_number || '';
-    return raw.split(',').map(s => s.trim()).filter(Boolean);
-  }, [asset]);
+  const serials = React.useMemo(() => getSerialNumbersArray(asset), [asset]);
 
   // The canonical scan value: selected serial → first serial → asset id
   const scanValue = selectedSerial || serials[0] || asset?.id || '';

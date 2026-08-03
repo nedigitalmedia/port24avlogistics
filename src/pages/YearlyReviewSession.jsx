@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { getSerialNumbersArray } from '@/lib/serialNumbers';
 
 const TABS = [
   { id: 'scan',     label: 'Scan Assets' },
@@ -217,7 +218,7 @@ export default function AssetReviewSession() {
     // This is the PRIMARY path for serial number lookup — review items store asset_id
     if (!match) {
       const liveAsset = allActiveAssets.find(a => {
-        const serials = tokenizeSerials(a.serial_numbers);
+        const serials = getSerialNumbersArray(a).map(s => s.toLowerCase());
         const singleSerial = (a.serial_number || '').trim().toLowerCase();
         const barcode = (a.barcode || '').trim().toLowerCase();
         return (
@@ -246,7 +247,7 @@ export default function AssetReviewSession() {
     if (!match) {
       // Check if the asset exists anywhere in active inventory (to give a better error message)
       const existsInInventory = allActiveAssets.find(a => {
-        const serials = tokenizeSerials(a.serial_numbers);
+        const serials = getSerialNumbersArray(a).map(s => s.toLowerCase());
         const singleSerial = (a.serial_number || '').trim().toLowerCase();
         const barcodeVal = (a.barcode || '').trim().toLowerCase();
         return (
@@ -380,10 +381,7 @@ export default function AssetReviewSession() {
       items = items.filter(i => {
         // Also match against the live asset's serial numbers
         const liveAsset = allActiveAssets.find(a => a.id === i.asset_id);
-        const serials = [
-          ...(liveAsset?.serial_numbers || '').toLowerCase().split(/[\s,;|]+/).map(s => s.trim()).filter(Boolean),
-          (liveAsset?.serial_number || '').trim().toLowerCase(),
-        ].filter(Boolean);
+        const serials = getSerialNumbersArray(liveAsset).map(s => s.toLowerCase());
         return (
           i.asset_name.toLowerCase().includes(q) ||
           (i.asset_barcode || '').toLowerCase().includes(q) ||

@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { getSerialNumbersArray } from '@/lib/serialNumbers';
 
 // Scan action modes
 const ACTIONS = [
@@ -228,7 +229,7 @@ export default function CrewMode() {
       const asset = assets.find(a =>
         a.barcode === val ||
         a.serial_number === val ||
-        (a.serial_numbers && a.serial_numbers.split(',').map(s => s.trim()).includes(val))
+        getSerialNumbersArray(a).includes(val)
       );
       if (!asset) { flashResult('error', val, 'No exact match found'); setBarcode(''); return; }
       moveMutation.mutate({ asset, action: scanAction, reason: brokenReason, notes: brokenNotes });
@@ -247,7 +248,7 @@ export default function CrewMode() {
     const asset = assets.find(a =>
       a.barcode === val ||
       a.serial_number === val ||
-      (a.serial_numbers && a.serial_numbers.split(',').map(s => s.trim()).includes(val))
+      getSerialNumbersArray(a).includes(val)
     );
 
     if (!asset) { 

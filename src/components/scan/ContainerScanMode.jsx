@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Camera, Package, CheckCircle2, XCircle, Boxes, Lock, Unlock, Trash2, ScanLine } from 'lucide-react';
 import CameraScanner from '@/components/crew/CameraScanner';
 import { cn } from '@/lib/utils';
+import { getSerialNumbersArray } from '@/lib/serialNumbers';
 
 export default function ContainerScanMode({ selectedShow, user, assets, fulfillments, requirements, onItemPicked }) {
   const queryClient = useQueryClient();
@@ -42,7 +43,7 @@ export default function ContainerScanMode({ selectedShow, user, assets, fulfillm
     const t = code.trim().toLowerCase();
     return (
       assets.find(a => a.id === code.trim()) ||
-      assets.find(a => a.serial_numbers && a.serial_numbers.split(',').some(s => s.trim().toLowerCase() === t)) ||
+      assets.find(a => getSerialNumbersArray(a).some(s => s.toLowerCase() === t)) ||
       assets.find(a => a.serial_number && a.serial_number.toLowerCase() === t) ||
       assets.find(a => a.barcode && a.barcode.toLowerCase() === t) ||
       null
@@ -73,7 +74,7 @@ export default function ContainerScanMode({ selectedShow, user, assets, fulfillm
         asset_id: asset.id,
         asset_name: asset.name,
         asset_barcode: asset.barcode,
-        asset_serial: asset.serial_number || (asset.serial_numbers ? asset.serial_numbers.split(',')[0].trim() : ''),
+        asset_serial: asset.serial_number || getSerialNumbersArray(asset)[0] || '',
         room_id: requirement?.room_id || null,
         room_name: requirement?.room_name || null,
         movement_state: 'picked',
