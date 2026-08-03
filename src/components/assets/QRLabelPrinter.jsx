@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Printer, QrCode, AlertCircle, ExternalLink } from 'lucide-react';
 import { LABEL_SIZES, printWithTemplate } from '@/lib/printQRLabel';
 import { useNavigate } from 'react-router-dom';
+import { getSerialNumbersArray } from '@/lib/serialNumbers';
 
 const MM_TO_PX = 3.7795;
 
