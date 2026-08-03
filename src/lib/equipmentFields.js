@@ -14,20 +14,12 @@ export const SYSTEM_FIELDS = [
     description: 'Internal equipment name',
   },
   {
-    key: 'list_price',
+    key: 'purchase_price',
     label: 'List Price',
     type: 'currency',
     required: false,
     wizard_step: 1,
     description: 'Base value or list price of the item',
-  },
-  {
-    key: 'price_incl_tax',
-    label: 'Price incl. Tax',
-    type: 'currency',
-    required: false,
-    wizard_step: 1,
-    description: 'Price including tax',
   },
   {
     key: 'barcode',
@@ -108,11 +100,9 @@ export const FIELD_ALIASES = {
     'current quantity excl reserved', 'quantity excl reserved', 'available qty',
     'current quantity', 'stock quantity', 'in stock',
   ],
-  list_price: [
+  purchase_price: [
     'list price', 'base price', 'price', 'value', 'retail price',
-    'rrp', 'msrp', 'unit price', 'cost price',
-  ],
-  price_incl_tax: [
+    'rrp', 'msrp', 'unit price', 'cost price', 'original price',
     'price incl tax', 'price including tax', 'price with tax', 'inc tax',
     'incl tax', 'gross price', 'price incl. tax',
   ],
@@ -217,8 +207,7 @@ export const IMPORT_FIELDS = [
   { key: 'barcode',           label: 'QR Code / RFID',                      required: false },
   { key: 'serial_numbers',    label: 'QR Codes / RFID Serial Numbers',      required: false },
   { key: 'quantity',          label: 'Current Quantity (excl. reserved)',    required: false },
-  { key: 'list_price',        label: 'List Price',                          required: false },
-  { key: 'price_incl_tax',    label: 'Price incl. Tax',                     required: false },
+  { key: 'purchase_price',    label: 'List Price',                          required: false },
   { key: 'daily_rate',        label: 'Rental / Sales Price',                required: false },
   { key: 'subrent_cost',      label: 'Subrent / Purchase Cost',             required: false },
   { key: 'country_of_origin', label: 'Country of Origin',                   required: false },
@@ -232,7 +221,7 @@ export const IMPORT_FIELDS = [
 export const EMPTY_FORM = {
   item_type: 'physical_item',
   name: '',
-  list_price: '',
+  purchase_price: '',
   barcode: '',
   tracking: 'serialized',   // 'serialized' | 'bulk'
   serial_numbers: '',       // comma-separated

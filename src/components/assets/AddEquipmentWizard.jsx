@@ -146,7 +146,6 @@ function makeEmptyForm(item_type = 'physical_item') {
     // Pricing
     daily_rate: '',
     subrent_cost: '',
-    list_price: '',
     replacement_value: '',
     purchase_price: '',
     purchase_date: '',

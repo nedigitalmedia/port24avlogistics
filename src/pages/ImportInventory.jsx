@@ -468,7 +468,7 @@ export default function ImportInventory() {
       };
 
       // Sanitize numerics
-      ['list_price', 'price_incl_tax', 'daily_rate', 'subrent_cost', 'quantity'].forEach(k => {
+      ['purchase_price', 'daily_rate', 'subrent_cost', 'quantity'].forEach(k => {
         if (rawRec[k] !== undefined && rawRec[k] !== '') {
           const n = Number(String(rawRec[k]).replace(/[^0-9.-]/g, ''));
           if (!isNaN(n)) rawRec[k] = n;
