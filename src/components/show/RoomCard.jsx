@@ -13,6 +13,7 @@ import MasterAddEquipmentForm from './MasterAddEquipmentForm';
 import RoundtableBadge from '@/components/roundtable/RoundtableBadge';
 import { useConflictCheck } from '@/lib/useConflictCheck';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { toast } from 'sonner';
 
 export default function RoomCard({ 
   room,
@@ -110,6 +111,7 @@ export default function RoomCard({
     mutationFn: (data) => db.entities.ShowRequirement.create({ ...data, show_id: showId, show_name: showName, room_id: room.id, room_name: room.name }),
     // ✅ Do NOT close the form — user may want to add more items
     onSuccess: () => { invalidateRequirements(); },
+    onError: (e) => toast.error(`Failed to add item: ${e.message}`),
   });
 
   const createSubrent = useMutation({
@@ -125,6 +127,7 @@ export default function RoomCard({
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['roundtable_subrents', showId] });
     },
+    onError: (e) => toast.error(`Failed to add sub-rent item: ${e.message}`),
   });
 
   const handleDragEnd = (result) => {
@@ -142,11 +145,13 @@ export default function RoomCard({
   const updateReq = useMutation({
     mutationFn: ({ id, data }) => db.entities.ShowRequirement.update(id, data),
     onSuccess: () => invalidateRequirements(),
+    onError: (e) => toast.error(`Failed to update item: ${e.message}`),
   });
 
   const deleteReq = useMutation({
     mutationFn: (id) => db.entities.ShowRequirement.delete(id),
     onSuccess: () => invalidateRequirements(),
+    onError: (e) => toast.error(`Failed to remove item: ${e.message}`),
   });
 
   const [editingSubrentId, setEditingSubrentId] = useState(null);
@@ -155,10 +160,12 @@ export default function RoomCard({
   const updateSubrent = useMutation({
     mutationFn: ({ id, data }) => db.entities.RoundtableSubrent.update(id, data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['roundtable_subrents', showId] }); setEditingSubrentId(null); },
+    onError: (e) => toast.error(`Failed to update sub-rent item: ${e.message}`),
   });
   const deleteSubrent = useMutation({
     mutationFn: (id) => db.entities.RoundtableSubrent.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['roundtable_subrents', showId] }),
+    onError: (e) => toast.error(`Failed to remove sub-rent item: ${e.message}`),
   });
 
   const startEditSubrent = (s) => {
