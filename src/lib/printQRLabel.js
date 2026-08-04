@@ -84,65 +84,13 @@ export function buildPrintHTML(elements, size, asset, brand, qrDataConfig = {}) 
 <style>
   @page { size:${size.w}mm ${size.h}mm; margin:0; }
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { background:white; margin:0; padding:0; width:${wPx}px; height:${hPx}px; }
+  html, body { background:white; margin:0; padding:0; width:${wPx}px; height:${hPx}px; }
   .label { position:relative; width:${wPx}px; height:${hPx}px; overflow:hidden; background:white; }
   @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
 </style></head><body>
 <div class="label">${elHtml}</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"><\/script>
 <script>
-  window.exportLabel = async () => {
-    try {
-      console.log('[QR Export] Starting label export, size: ${size.w}mm x ${size.h}mm');
-      const label = document.querySelector('.label');
-      if (!label) throw new Error('Label element not found');
-      
-      if (!window.html2canvas) throw new Error('html2canvas not loaded');
-      if (!window.jspdf) throw new Error('jsPDF not loaded');
-      
-      // Capture canvas at exact template dimensions (1mm = 3.7795px at scale 1)
-      // Use scale: 2 to get crisp output = 7.559px per mm
-      const MM_TO_PX = 3.7795;
-      const scale = 2;
-      const canvasPixelW = ${size.w} * MM_TO_PX;     // Window width at 1x scale
-      const canvasPixelH = ${size.h} * MM_TO_PX;     // Window height at 1x scale
-      
-      console.log('[QR Export] Rendering canvas at', Math.round(canvasPixelW * scale), 'x', Math.round(canvasPixelH * scale), 'px (scale', scale, ') from template:', ${size.w}, 'x', ${size.h}, 'mm');
-      const canvas = await html2canvas(label, { scale, useCORS: true, backgroundColor: '#ffffff', windowWidth: Math.round(canvasPixelW), windowHeight: Math.round(canvasPixelH) });
-      console.log('[QR Export] Canvas rendered:', canvas.width, 'x', canvas.height, 'px');
-      
-      // Determine orientation based on template width vs height
-      const isLandscape = ${size.w} > ${size.h};
-      
-      // Create PDF with exact dimensions FIRST (no default format)
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({
-        orientation: isLandscape ? 'l' : 'p',
-        unit: 'mm',
-        hotfixes: ['px_scaling'],
-        format: [${size.w}, ${size.h}]
-      });
-      console.log('[QR Export] PDF created with', isLandscape ? 'landscape' : 'portrait', 'format [${size.w}, ${size.h}]mm');
-      
-      // Embed the canvas image at full page size
-      const imgData = canvas.toDataURL('image/png');
-      console.log('[QR Export] Image encoded, length:', imgData.length, '- canvas dimensions:', canvas.width, 'x', canvas.height);
-      
-      // Add image to fill the entire page with no margins
-      pdf.addImage(imgData, 'PNG', 0, 0, ${size.w}, ${size.h});
-      console.log('[QR Export] Image placed at [0,0] filling ${size.w}×${size.h}mm');
-      
-      pdf.save('qr-label.pdf');
-      console.log('[QR Export] PDF saved successfully');
-    } catch (err) {
-      console.error('[QR Export] Error:', err.message || err);
-      alert('Export failed: ' + (err.message || err));
-      throw err;
-    }
-  };
-  
   document.querySelectorAll('[data-qr]').forEach(el => {
     const sz = +el.dataset.size;
     new QRCode(el, { text: el.dataset.qr, width: sz, height: sz, correctLevel: QRCode.CorrectLevel.M });
@@ -150,8 +98,9 @@ export function buildPrintHTML(elements, size, asset, brand, qrDataConfig = {}) 
     if (img) { img.style.width = sz + 'px'; img.style.height = sz + 'px'; }
   });
 
-  // Wait for QR codes and logo images to fully load before capturing
-  setTimeout(() => window.exportLabel(), 2500);
+  // Give the QR code(s) a moment to render, then go straight to the system print dialog.
+  window.addEventListener('afterprint', () => window.close());
+  setTimeout(() => window.print(), 300);
 <\/script></body></html>`;
 }
 
@@ -194,14 +143,16 @@ export function printWithTemplate(asset, template, sizeId, brand) {
   console.log('[printWithTemplate] Building HTML for export');
   const html = buildPrintHTML(elements, size, asset, brand, template?.qr_data_config);
   console.log('[printWithTemplate] Opening print window');
-  const win = window.open('', '_blank', 'width=900,height=700');
+  const winW = Math.max(320, Math.round(size.w * 3.7795) + 80);
+  const winH = Math.max(240, Math.round(size.h * 3.7795) + 80);
+  const win = window.open('', '_blank', `width=${winW},height=${winH}`);
   if (!win) {
     alert('Pop-up blocked. Please allow pop-ups and try again.');
     return;
   }
   win.document.write(html);
   win.document.close();
-  console.log('[printWithTemplate] Window opened, export will start in 2s');
+  console.log('[printWithTemplate] Window opened, printing shortly');
 }
 
 /** Minimal fallback if no block_config template is available */
@@ -237,52 +188,15 @@ function openFallbackPrint(asset, size, qrDataConfig = {}) {
   <div id="qr"></div>
   <div class="text"><div class="name">${asset.name}</div><div class="code">${code}</div></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"><\/script>
   <script>
-  window.exportLabel = async () => {
-    try {
-      console.log('[QR Fallback Export] Starting, size: ${size.w}mm x ${size.h}mm');
-      if (!window.html2canvas) throw new Error('html2canvas not loaded');
-      if (!window.jspdf) throw new Error('jsPDF not loaded');
-
-      // Capture canvas at exact template dimensions
-      const MM_TO_PX = 3.7795;
-      const scale = 2;
-      const canvasPixelW = ${size.w} * MM_TO_PX;     // Window width at 1x scale
-      const canvasPixelH = ${size.h} * MM_TO_PX;     // Window height at 1x scale
-
-      const body = document.body;
-      console.log('[QR Fallback Export] Rendering canvas at', Math.round(canvasPixelW * scale), 'x', Math.round(canvasPixelH * scale), 'px (scale', scale, ') from', ${size.w}, 'x', ${size.h}, 'mm');
-      const canvas = await html2canvas(body, { scale, useCORS: true, backgroundColor: '#ffffff', windowWidth: Math.round(canvasPixelW), windowHeight: Math.round(canvasPixelH) });
-      console.log('[QR Fallback Export] Canvas:', canvas.width, 'x', canvas.height, 'px');
-
-      const isLandscape = ${size.w} > ${size.h};
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({
-        orientation: isLandscape ? 'l' : 'p',
-        unit: 'mm',
-        hotfixes: ['px_scaling'],
-        format: [${size.w}, ${size.h}]
-      });
-      console.log('[QR Fallback Export] PDF created with', isLandscape ? 'landscape' : 'portrait', 'format [${size.w}, ${size.h}]mm');
-
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, ${size.w}, ${size.h});
-      pdf.save('qr-label.pdf');
-      console.log('[QR Fallback Export] Success');
-    } catch (err) {
-      console.error('[QR Fallback Export] Error:', err.message || err);
-      alert('Export failed: ' + (err.message || err));
-      throw err;
-    }
-  };
-
   new QRCode(document.getElementById('qr'), { text: '${code}', width: ${qrPx}, height: ${qrPx}, correctLevel: QRCode.CorrectLevel.M });
-  setTimeout(() => window.exportLabel(), 2500);
+  window.addEventListener('afterprint', () => window.close());
+  setTimeout(() => window.print(), 300);
   <\/script></body></html>`;
 
-  const win = window.open('', '_blank', 'width=800,height=600');
+  const winW = Math.max(320, wPx + 80);
+  const winH = Math.max(240, hPx + 80);
+  const win = window.open('', '_blank', `width=${winW},height=${winH}`);
   win.document.write(html);
   win.document.close();
 }
