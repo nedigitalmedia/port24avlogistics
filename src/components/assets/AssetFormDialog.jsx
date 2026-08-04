@@ -95,8 +95,8 @@ export default function AssetFormDialog({ open, onOpenChange, asset }) {
   const [formData, setFormData] = useState(DEFAULT_FORM);
 
   const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: () => db.entities.Category.list() });
-  const { data: partners = [] } = useQuery({ queryKey: ['roundtablePartners'], queryFn: () => db.entities.RoundtablePartner.filter({ is_active: true }) });
-  const { data: customFields = [] } = useQuery({ queryKey: ['customFields'], queryFn: () => db.entities.CustomField.filter({ applies_to: 'asset' }) });
+  const { data: partners = [] } = useQuery({ queryKey: ['roundtablePartners'], queryFn: () => db.entities.RoundtablePartner.list('-created_date', 100) });
+  const { data: customFields = [] } = useQuery({ queryKey: ['customFields'], queryFn: () => db.entities.CustomField.filter({ entity_type: 'asset' }) });
   const { data: allAssets = [] } = useQuery({ queryKey: ['assets'], queryFn: () => db.entities.Asset.list('-created_date', 5000) });
 
   useEffect(() => {

@@ -227,7 +227,7 @@ export default function AdditionalEquipmentApprovalPanel({ showId, show, subLoca
                 </div>
                 <div>
                   <p className="text-muted-foreground">Quantity</p>
-                  <p className="font-medium">{request.requested_quantity}</p>
+                  <p className="font-medium">{request.quantity}</p>
                 </div>
               </div>
 

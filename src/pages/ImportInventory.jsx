@@ -127,7 +127,7 @@ export default function ImportInventory() {
   });
   const { data: customFields = [] } = useQuery({
     queryKey: ['customFields'],
-    queryFn: () => db.entities.CustomField.filter({ applies_to: 'asset' }),
+    queryFn: () => db.entities.CustomField.filter({ entity_type: 'asset' }),
   });
   const { data: templates = [] } = useQuery({
     queryKey: ['importTemplates'],

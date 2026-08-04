@@ -31,7 +31,7 @@ export default function AdditionalEquipmentDialog({ open, onOpenChange, asset, s
         asset_name: asset.name,
         asset_barcode: asset.barcode || '',
         serial_number: asset.serial_number || getSerialNumbersString(asset),
-        requested_quantity: 1,
+        quantity: 1,
         sub_location_id: selectedSubLocationId || null,
         sub_location_name: subLoc?.name || '',
         status: 'pending',

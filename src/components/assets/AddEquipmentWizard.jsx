@@ -1336,7 +1336,7 @@ export default function AddEquipmentWizard({ open, onOpenChange, initialType }) 
 
   const { data: customFields = [] } = useQuery({
     queryKey: ['customFields'],
-    queryFn: () => db.entities.CustomField.filter({ applies_to: 'asset' }),
+    queryFn: () => db.entities.CustomField.filter({ entity_type: 'asset' }),
   });
   const { data: allAssets = [] } = useQuery({
     queryKey: ['assets'],
@@ -1348,7 +1348,7 @@ export default function AddEquipmentWizard({ open, onOpenChange, initialType }) 
   });
   const { data: partners = [] } = useQuery({
     queryKey: ['roundtablePartners'],
-    queryFn: () => db.entities.RoundtablePartner.filter({ is_active: true }),
+    queryFn: () => db.entities.RoundtablePartner.list('-created_date', 100),
   });
 
   const prevOpen = useRef(false);

@@ -53,7 +53,7 @@ const STATUS_COLORS = {
   inactive: 'bg-slate-500/10 text-slate-500 border-slate-500/20',
 };
 
-const emptyField = { field_name: '', field_key: '', field_type: 'text', options: '', applies_to: 'asset', is_required: false, is_hidden: false, is_readonly: false, default_value: '', section: '', show_when_category: '' };
+const emptyField = { field_name: '', field_key: '', field_type: 'text', options: '', entity_type: 'asset', is_required: false, is_hidden: false, is_readonly: false, default_value: '', section: '', show_when_category: '' };
 
 function AdminEmployeeGear() {
   const { data: crewMembers = [] } = useQuery({
@@ -253,8 +253,8 @@ export default function Admin() {
   const openCreate = () => { setEditingField(null); setFieldForm(emptyField); setFieldDialogOpen(true); };
   const openEdit = (f) => { setEditingField(f); setFieldForm({ ...emptyField, ...f }); setFieldDialogOpen(true); };
 
-  const assetFields = customFields.filter(f => f.applies_to === 'asset').sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-  const showFields = customFields.filter(f => f.applies_to === 'show').sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  const assetFields = customFields.filter(f => f.entity_type === 'asset').sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  const showFields = customFields.filter(f => f.entity_type === 'show').sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
   const FieldTable = ({ fields }) => (
     fields.length === 0
@@ -606,7 +606,7 @@ export default function Admin() {
               </div>
               <div>
                 <Label>Applies To</Label>
-                <Select value={fieldForm.applies_to} onValueChange={v => setFieldForm({ ...fieldForm, applies_to: v })}>
+                <Select value={fieldForm.entity_type} onValueChange={v => setFieldForm({ ...fieldForm, entity_type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="asset">Assets</SelectItem>
