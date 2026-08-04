@@ -19,7 +19,6 @@ import AddEquipmentWizard from '@/components/assets/AddEquipmentWizard';
 import QRLabelPrinter from '@/components/assets/QRLabelPrinter';
 import KitEditDialog from '@/components/kits/KitEditDialog';
 import { usePermissions } from '@/lib/usePermissions';
-import SerialNumbersDisplay from '@/components/assets/SerialNumbersDisplay';
 import { getSerialNumbersString } from '@/lib/serialNumbers';
 import AssetBarcodeModal from '@/components/assets/AssetBarcodeModal';
 import { ColumnToggle, ResizableHead, DEFAULT_COLUMNS } from '@/components/assets/ColumnManager';
@@ -81,7 +80,7 @@ export default function Assets() {
 
   // Renders a single asset/kit row — used both standalone (name group of one)
   // and nested under an expanded name group's parent row.
-  function renderAssetRow(asset, { indent } = {}) {
+  function renderAssetRow(asset) {
     return (
       <tr
         key={asset.id}
@@ -120,15 +119,18 @@ export default function Assets() {
         )}
         {vis('name') && (
           <td className="px-2 py-2.5 font-medium" style={{ width: col('name').width }}>
-            <div className={cn("flex flex-col gap-0.5 truncate", indent && "pl-5")}>
-              <span className="truncate">{asset.name}</span>
-              <PartnerOwnershipBadge asset={asset} size="sm" />
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="w-3.5 h-3.5 shrink-0" />
+              <div className="flex flex-col gap-0.5 truncate">
+                <span className="truncate">{asset.name}</span>
+                <PartnerOwnershipBadge asset={asset} size="sm" />
+              </div>
             </div>
           </td>
         )}
         {vis('serial') && (
-          <td className="px-2 py-2.5 text-muted-foreground" style={{ width: col('serial').width }}>
-            <SerialNumbersDisplay serialNumbers={getSerialNumbersString(asset)} />
+          <td className="px-2 py-2.5 text-muted-foreground truncate" style={{ width: col('serial').width }}>
+            {asset.asset_number || asset.barcode || <span className="text-muted-foreground/50 text-xs">—</span>}
           </td>
         )}
         {vis('category') && (
@@ -413,7 +415,7 @@ export default function Assets() {
                   {vis('type')      && <ResizableHead col={col('type')}      onResize={handleColResize} className="text-center">Type</ResizableHead>}
                   {vis('typeLabel') && <ResizableHead col={col('typeLabel')} onResize={handleColResize}></ResizableHead>}
                   {vis('name')      && <ResizableHead col={col('name')}      onResize={handleColResize}>Name</ResizableHead>}
-                  {vis('serial')    && <ResizableHead col={col('serial')}    onResize={handleColResize}>Serial / Asset #</ResizableHead>}
+                  {vis('serial')    && <ResizableHead col={col('serial')}    onResize={handleColResize}>Asset #</ResizableHead>}
                   {vis('category')  && <ResizableHead col={col('category')}  onResize={handleColResize}>Category</ResizableHead>}
                   {vis('status')    && <ResizableHead col={col('status')}    onResize={handleColResize}>Status</ResizableHead>}
                   {vis('condition') && <ResizableHead col={col('condition')} onResize={handleColResize}>Condition</ResizableHead>}
@@ -485,7 +487,7 @@ export default function Assets() {
                         {vis('location')  && <td className="px-2 py-2.5" style={{ width: col('location').width }} />}
                         <td className="px-2 py-2.5 w-24" />
                       </tr>
-                      {isExpanded && items.map(asset => renderAssetRow(asset, { indent: true }))}
+                      {isExpanded && items.map(asset => renderAssetRow(asset))}
                     </React.Fragment>
                   );
                 })}
