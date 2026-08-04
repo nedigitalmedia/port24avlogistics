@@ -996,7 +996,7 @@ function StepKitContents({ form, set, allAssets }) {
         for (const serial of serials) {
           const key = `${a.id}::${serial}`;
           if (serial.toLowerCase().includes(q) || a.name?.toLowerCase().includes(q) || a.category?.toLowerCase().includes(q)) {
-            rows.push({ key, asset: a, serial, isLinked: linkedKeys.has(key), displayLabel: serial });
+            rows.push({ key, asset: a, serial, isLinked: linkedKeys.has(key), displayLabel: a.asset_number || a.barcode || serial });
           }
         }
       }
