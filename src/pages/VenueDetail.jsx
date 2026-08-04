@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { db } from '@/api/db';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, AlertTriangle, Info, Zap, History, Pencil, StickyNote } from 'lucide-react';
+import { MapPin, AlertTriangle, Info, Zap, History, Pencil, StickyNote, Truck, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import VenueFormDialog from '@/components/crm/VenueFormDialog';
 import BackButton from '@/components/shared/BackButton';
 import ClientNotesPanel from '@/components/crm/ClientNotesPanel';
+import { googleMapsLink, geocodeAddress, getDriveDistance } from '@/lib/geocode';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function VenueDetail() {
   const { id } = useParams();
+  const { orgId } = useAuth();
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
 
@@ -25,6 +29,34 @@ export default function VenueDetail() {
     queryKey: ['shows-for-venue', id],
     queryFn: () => db.entities.Show.filter({ venue_id: id }),
     enabled: !!id,
+  });
+
+  const { data: brandList = [] } = useQuery({
+    queryKey: ['brand', orgId],
+    queryFn: () => db.entities.BrandSettings.filter({ org_id: orgId }),
+    enabled: !!orgId,
+  });
+  const companyAddress = brandList[0]?.company_address;
+  const hasDistanceApi = !!import.meta.env.VITE_ORS_API_KEY;
+
+  const distanceMutation = useMutation({
+    mutationFn: async () => {
+      if (!venue.latitude || !venue.longitude) throw new Error('This venue has no verified location — re-select its address from the autocomplete in Edit.');
+      if (!companyAddress) throw new Error('Set your company address in Branding Settings first.');
+      const origin = await geocodeAddress(companyAddress);
+      if (!origin) throw new Error('Could not locate your company address.');
+      const result = await getDriveDistance(origin, { lat: venue.latitude, lon: venue.longitude });
+      if (!result) throw new Error('Distance lookup is not configured.');
+      await db.entities.Venue.update(venue.id, {
+        distance_from_warehouse_miles: Math.round(result.miles * 10) / 10,
+        drive_time_minutes: Math.round(result.minutes),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['venue', id] });
+      toast.success('Transport distance updated');
+    },
+    onError: (e) => toast.error(e.message),
   });
 
   if (isLoading) return <div className="flex items-center justify-center py-24"><div className="w-8 h-8 border-4 rounded-full animate-spin border-border border-t-primary" /></div>;
@@ -47,8 +79,14 @@ export default function VenueDetail() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">{venue.name}</h1>
-            {(venue.city || venue.state) && (
-              <p className="text-sm text-muted-foreground">{[venue.address, venue.city, venue.state, venue.zip].filter(Boolean).join(', ')}</p>
+            {(venue.address || venue.city || venue.state) && (
+              <a
+                href={googleMapsLink({ lat: venue.latitude, lon: venue.longitude, address: [venue.address, venue.city, venue.state, venue.zip].filter(Boolean).join(', ') })}
+                target="_blank" rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-primary hover:underline transition-colors"
+              >
+                {[venue.address, venue.city, venue.state, venue.zip].filter(Boolean).join(', ')}
+              </a>
             )}
           </div>
         </div>
@@ -103,7 +141,32 @@ export default function VenueDetail() {
           </div>
         </TabsContent>
 
-        <TabsContent value="logistics">
+        <TabsContent value="logistics" className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Truck className="w-4 h-4 text-primary" /> Gear Transport Distance</CardTitle></CardHeader>
+            <CardContent className="text-sm">
+              {venue.distance_from_warehouse_miles != null ? (
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <p className="text-lg font-semibold">{venue.distance_from_warehouse_miles} miles</p>
+                    <p className="text-muted-foreground">~{Math.round(venue.drive_time_minutes)} min drive from your warehouse</p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => distanceMutation.mutate()} disabled={distanceMutation.isPending}>
+                    {distanceMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Recalculate'}
+                  </Button>
+                </div>
+              ) : !hasDistanceApi ? (
+                <p className="text-muted-foreground">Distance calculation isn't set up yet — add an OpenRouteService API key to enable this.</p>
+              ) : !venue.latitude ? (
+                <p className="text-muted-foreground">This venue's address hasn't been verified yet — edit it and re-select the address from the autocomplete suggestions.</p>
+              ) : (
+                <Button size="sm" onClick={() => distanceMutation.mutate()} disabled={distanceMutation.isPending} className="gap-2">
+                  {distanceMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Truck className="w-3.5 h-3.5" />}
+                  Calculate Distance
+                </Button>
+              )}
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-orange-500" /> Load-in Rules & Restrictions</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">

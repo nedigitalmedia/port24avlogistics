@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import AddressAutocomplete from '@/components/shared/AddressAutocomplete';
 
 const EMPTY = {
-  name: '', address: '', city: '', state: '', zip: '', country: 'USA',
+  name: '', address: '', city: '', state: '', zip: '', country: 'USA', latitude: null, longitude: null,
   venue_type: 'other', capacity: '', contact_name: '', contact_phone: '', contact_email: '', website: '',
   load_in_rules: '', load_in_dock_address: '', load_in_hours: '', freight_elevator: false,
   dock_height: '', parking_notes: '',
@@ -73,7 +74,26 @@ export default function VenueFormDialog({ open, onOpenChange, venue, onSaved }) 
                   </Select>
                 </div>
                 <div><Label>Capacity</Label><Input type="number" value={form.capacity} onChange={e => set('capacity', e.target.value)} /></div>
-                <div className="col-span-2"><Label>Address</Label><Input value={form.address} onChange={e => set('address', e.target.value)} /></div>
+                <div className="col-span-2">
+                  <Label>Address</Label>
+                  <AddressAutocomplete
+                    value={form.address}
+                    onChange={v => setForm(f => ({ ...f, address: v, latitude: null, longitude: null }))}
+                    onSelect={(r) => setForm(f => ({
+                      ...f,
+                      address: r.address || f.address,
+                      city: r.city || f.city,
+                      state: r.state || f.state,
+                      zip: r.zip || f.zip,
+                      country: r.country || f.country,
+                      latitude: r.lat,
+                      longitude: r.lon,
+                    }))}
+                  />
+                  {form.latitude != null && (
+                    <p className="text-xs text-emerald-600 mt-1">✓ Location verified — will be used for transport distance</p>
+                  )}
+                </div>
                 <div><Label>City</Label><Input value={form.city} onChange={e => set('city', e.target.value)} /></div>
                 <div><Label>State</Label><Input value={form.state} onChange={e => set('state', e.target.value)} /></div>
                 <div><Label>Zip</Label><Input value={form.zip} onChange={e => set('zip', e.target.value)} /></div>
