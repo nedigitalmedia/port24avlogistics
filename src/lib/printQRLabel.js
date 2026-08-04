@@ -17,6 +17,39 @@ export const LABEL_SIZES = [
   { id: 'custom_60x40', label: 'Generic Landscape (60×40mm)',   w: 60, h: 40 },
 ];
 
+// Renders the page body to a canvas, wraps it in a PDF sized exactly to the
+// label, and navigates the window to the PDF blob so the browser's native
+// PDF viewer opens it. Printing a PDF document (vs. a plain HTML page) never
+// gets the browser's date/title/url header-footer stamped on it.
+function pdfExportScript(size) {
+  return `
+  (async () => {
+    try {
+      await new Promise(r => setTimeout(r, 300)); // let QR code(s)/images finish rendering
+      if (!window.html2canvas) throw new Error('html2canvas not loaded');
+      if (!window.jspdf) throw new Error('jsPDF not loaded');
+
+      const MM_TO_PX = 3.7795;
+      const canvas = await html2canvas(document.body, {
+        scale: 3, useCORS: true, backgroundColor: '#ffffff',
+        windowWidth: Math.round(${size.w} * MM_TO_PX),
+        windowHeight: Math.round(${size.h} * MM_TO_PX),
+      });
+
+      const isLandscape = ${size.w} > ${size.h};
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: isLandscape ? 'l' : 'p', unit: 'mm', hotfixes: ['px_scaling'], format: [${size.w}, ${size.h}] });
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, ${size.w}, ${size.h});
+
+      window.location.href = pdf.output('bloburl');
+    } catch (err) {
+      console.error('[QR Label PDF] Error:', err.message || err);
+      alert('Failed to prepare label for printing: ' + (err.message || err));
+    }
+  })();
+  `;
+}
+
 /**
  * Build the full print-window HTML from our template's block_config elements.
  * This is the same renderer used in QRLabelBuilder.buildPrintHTML — kept in sync.
@@ -90,6 +123,8 @@ export function buildPrintHTML(elements, size, asset, brand, qrDataConfig = {}) 
 </style></head><body>
 <div class="label">${elHtml}</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"><\/script>
 <script>
   document.querySelectorAll('[data-qr]').forEach(el => {
     const sz = +el.dataset.size;
@@ -98,9 +133,14 @@ export function buildPrintHTML(elements, size, asset, brand, qrDataConfig = {}) 
     if (img) { img.style.width = sz + 'px'; img.style.height = sz + 'px'; }
   });
 
-  // Give the QR code(s) a moment to render, then go straight to the system print dialog.
-  window.addEventListener('afterprint', () => window.close());
-  setTimeout(() => window.print(), 300);
+  // Browsers stamp a date/title/url header-footer onto plain HTML page prints —
+  // there's no page-level way to suppress that. Printing an actual PDF file
+  // instead (via the browser's native PDF viewer) avoids it entirely, since
+  // that's a document print, not a webpage print. So: render the label to a
+  // canvas, wrap it in a PDF sized exactly to the label, and open the PDF for
+  // viewing — the user prints from there (Cmd/Ctrl+P or the viewer's own
+  // print icon), which never adds that unwanted text.
+  ${pdfExportScript(size)}
 <\/script></body></html>`;
 }
 
@@ -188,10 +228,11 @@ function openFallbackPrint(asset, size, qrDataConfig = {}) {
   <div id="qr"></div>
   <div class="text"><div class="name">${asset.name}</div><div class="code">${code}</div></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"><\/script>
   <script>
   new QRCode(document.getElementById('qr'), { text: '${code}', width: ${qrPx}, height: ${qrPx}, correctLevel: QRCode.CorrectLevel.M });
-  window.addEventListener('afterprint', () => window.close());
-  setTimeout(() => window.print(), 300);
+  ${pdfExportScript(size)}
   <\/script></body></html>`;
 
   const winW = Math.max(320, wPx + 80);
