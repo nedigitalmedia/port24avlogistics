@@ -64,7 +64,7 @@ export default function Step6ExtraDetails({ formData, set, customFields, updateC
                   <Select value={formData.custom_fields?.[cf.field_key] || ''} onValueChange={v => updateCustomField(cf.field_key, v)}>
                     <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
                     <SelectContent>
-                      {cf.options?.split(',').map(o => <SelectItem key={o.trim()} value={o.trim()}>{o.trim()}</SelectItem>)}
+                      {(Array.isArray(cf.options) ? cf.options.join(',') : cf.options || '').split(',').filter(Boolean).map(o => <SelectItem key={o.trim()} value={o.trim()}>{o.trim()}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 ) : (

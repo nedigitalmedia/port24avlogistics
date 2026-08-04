@@ -825,7 +825,7 @@ function StepAdvanced({ form, set, customFields }) {
                 {cf.field_type === 'select' ? (
                   <Select value={form.custom_fields?.[cf.field_key] || ''} onValueChange={v => updateCF(cf.field_key, v)}>
                     <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                    <SelectContent>{cf.options?.split(',').map(o => <SelectItem key={o.trim()} value={o.trim()}>{o.trim()}</SelectItem>)}</SelectContent>
+                    <SelectContent>{(Array.isArray(cf.options) ? cf.options.join(',') : cf.options || '').split(',').filter(Boolean).map(o => <SelectItem key={o.trim()} value={o.trim()}>{o.trim()}</SelectItem>)}</SelectContent>
                   </Select>
                 ) : (
                   <Input type={cf.field_type === 'number' ? 'number' : cf.field_type === 'date' ? 'date' : 'text'}
