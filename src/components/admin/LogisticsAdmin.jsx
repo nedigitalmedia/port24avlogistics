@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
 
 const TRAVEL_TYPES = [
   { value: 'crew_flight',     label: 'Crew Flight' },
@@ -75,16 +76,19 @@ export default function LogisticsAdmin() {
       setEditingRecord(null);
       setFormData(emptyRecord);
     },
+    onError: (e) => toast.error(`Failed to save: ${e.message}`),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => db.entities.LogisticsBank.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['logisticsBank'] }),
+    onError: (e) => toast.error(`Failed to delete: ${e.message}`),
   });
 
   const toggleActiveMutation = useMutation({
     mutationFn: (record) => db.entities.LogisticsBank.update(record.id, { is_active: !record.is_active }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['logisticsBank'] }),
+    onError: (e) => toast.error(`Failed to update: ${e.message}`),
   });
 
   const filteredRecords = useMemo(() => {

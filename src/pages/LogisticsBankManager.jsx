@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
+import { toast } from 'sonner';
 
 const LOGISTICS_TYPES = [
   'crew_flight',
@@ -71,6 +72,7 @@ export default function LogisticsBankManager() {
       resetForm();
       setShowDialog(false);
     },
+    onError: (e) => toast.error(`Failed to save: ${e.message}`),
   });
 
   // Update mutation
@@ -81,6 +83,7 @@ export default function LogisticsBankManager() {
       resetForm();
       setShowDialog(false);
     },
+    onError: (e) => toast.error(`Failed to save: ${e.message}`),
   });
 
   // Delete mutation
@@ -89,6 +92,7 @@ export default function LogisticsBankManager() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['logisticsBank'] });
     },
+    onError: (e) => toast.error(`Failed to delete: ${e.message}`),
   });
 
   const resetForm = () => {

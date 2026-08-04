@@ -41,9 +41,10 @@ export default function ItemFormDialog({ item, partners, onClose, onSaved }) {
     onSuccess: () => { 
       qc.invalidateQueries({ queryKey: ['roundtable_items'] });
       qc.invalidateQueries({ queryKey: ['roundtable_partners'] });
-      toast.success(item ? 'Item updated' : 'Item added'); 
-      onSaved(); 
+      toast.success(item ? 'Item updated' : 'Item added');
+      onSaved();
     },
+    onError: (e) => toast.error(e.message),
   });
 
   return (

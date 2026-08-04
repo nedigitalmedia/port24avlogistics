@@ -64,6 +64,7 @@ export default function DocumentSettings() {
       toast.success('Document settings saved');
       queryClient.invalidateQueries({ queryKey: ['documentSettings'] });
     },
+    onError: (e) => toast.error(e.message),
   });
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));

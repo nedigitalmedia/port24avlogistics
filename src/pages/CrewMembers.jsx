@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import PageHeader from '@/components/shared/PageHeader';
 import EmployeeCheckoutPanel from '@/components/employee/EmployeeCheckoutPanel';
+import { toast } from 'sonner';
 
 const empty = {
   user_id: '', email: '', phone_number: '', job_title: '', department: '',
@@ -61,11 +62,13 @@ function CrewMembersAdmin() {
       setForm(empty);
       setEditing(null);
     },
+    onError: (e) => toast.error(`Failed to save: ${e.message}`),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => db.entities.CrewMember.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['crewMembers'] }),
+    onError: (e) => toast.error(`Failed to delete: ${e.message}`),
   });
 
   const openCreate = () => { setEditing(null); setForm(empty); setShowRates(false); setDialogOpen(true); };

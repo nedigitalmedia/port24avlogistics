@@ -23,6 +23,7 @@ export default function PartnerFormDialog({ partner, onClose, onSaved }) {
       ? db.entities.RoundtablePartner.update(partner.id, form)
       : db.entities.RoundtablePartner.create(form),
     onSuccess: () => { toast.success(partner ? 'Partner updated' : 'Partner added'); onSaved(); },
+    onError: (e) => toast.error(e.message),
   });
 
   return (

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import PageHeader from '@/components/shared/PageHeader';
 import { Save, Eye } from 'lucide-react';
+import { toast } from 'sonner';
 
 const PLACEHOLDERS = [
   { key: '{{crew_name}}', desc: 'Crew member name' },
@@ -28,8 +29,8 @@ export default function CrewBookingEmailTemplate() {
   const [showPreview, setShowPreview] = useState(false);
   const [form, setForm] = useState({
     subject: '',
-    html_body: '',
-    is_active: true,
+    body: '',
+    is_default: true,
   });
 
   const queryClient = useQueryClient();
@@ -47,8 +48,8 @@ export default function CrewBookingEmailTemplate() {
     if (template) {
       setForm({
         subject: template.subject || '',
-        html_body: template.html_body || '',
-        is_active: template.is_active !== false,
+        body: template.body || '',
+        is_default: template.is_default !== false,
       });
     }
   }, [template]);
@@ -64,11 +65,13 @@ export default function CrewBookingEmailTemplate() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crewBookingEmailTemplate'] });
+      toast.success('Template saved');
     },
+    onError: (e) => toast.error(`Failed to save: ${e.message}`),
   });
 
   const handleSave = () => {
-    if (!form.subject.trim() || !form.html_body.trim()) {
+    if (!form.subject.trim() || !form.body.trim()) {
       alert('Subject and body are required');
       return;
     }
@@ -129,8 +132,8 @@ export default function CrewBookingEmailTemplate() {
             </CardHeader>
             <CardContent>
               <Textarea
-                value={form.html_body}
-                onChange={(e) => setForm({ ...form, html_body: e.target.value })}
+                value={form.body}
+                onChange={(e) => setForm({ ...form, body: e.target.value })}
                 placeholder="Enter HTML email content with {{placeholders}}"
                 className="font-mono text-sm h-96"
               />
@@ -168,7 +171,7 @@ export default function CrewBookingEmailTemplate() {
                     onClick={() => {
                       setForm({
                         ...form,
-                        html_body: form.html_body + key,
+                        body: form.body + key,
                       });
                     }}
                   >
@@ -195,7 +198,7 @@ export default function CrewBookingEmailTemplate() {
               </p>
               <div
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderPreview(form.html_body)) }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderPreview(form.body)) }}
               />
             </div>
           </CardContent>

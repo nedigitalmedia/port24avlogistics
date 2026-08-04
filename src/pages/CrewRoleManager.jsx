@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import PageHeader from '@/components/shared/PageHeader';
 import { getPricingMethodLabel } from '@/lib/crewRoleCalculations';
+import { toast } from 'sonner';
 
 const DEPARTMENTS = [
   'Audio', 'Video', 'Lighting', 'Grip', 'Electric', 'Stage', 'Production', 'Direction', 'Post-Production', 'Other'
@@ -63,17 +64,20 @@ export default function CrewRoleManager() {
       setFormData(emptyRole);
       setEditingRole(null);
     },
+    onError: (e) => toast.error(`Failed to save role: ${e.message}`),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => db.entities.CrewRole.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['crewRoles'] }),
+    onError: (e) => toast.error(`Failed to delete role: ${e.message}`),
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, field, value }) =>
       db.entities.CrewRole.update(id, { [field]: value }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['crewRoles'] }),
+    onError: (e) => toast.error(`Failed to update role: ${e.message}`),
   });
 
   const handleCreate = () => {

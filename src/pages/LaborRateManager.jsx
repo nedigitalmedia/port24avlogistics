@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, Upload } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
+import { toast } from 'sonner';
 
 export default function LaborRateManager() {
   const queryClient = useQueryClient();
@@ -43,7 +44,8 @@ export default function LaborRateManager() {
       queryClient.invalidateQueries({ queryKey: ['laborRates'] });
       resetForm();
       setOpenDialog(false);
-    }
+    },
+    onError: (e) => toast.error(`Failed to save: ${e.message}`),
   });
 
   const updateRateMutation = useMutation({
@@ -52,12 +54,14 @@ export default function LaborRateManager() {
       queryClient.invalidateQueries({ queryKey: ['laborRates'] });
       resetForm();
       setOpenDialog(false);
-    }
+    },
+    onError: (e) => toast.error(`Failed to save: ${e.message}`),
   });
 
   const deleteRateMutation = useMutation({
     mutationFn: (id) => db.entities.LaborRate.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['laborRates'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['laborRates'] }),
+    onError: (e) => toast.error(`Failed to delete: ${e.message}`),
   });
 
   const handleEdit = (rate) => {
