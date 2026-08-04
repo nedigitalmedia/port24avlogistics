@@ -486,12 +486,22 @@ export default function ImportInventory() {
           baseRec.tracking = 'serialized';
           baseRec.quantity = 1;
 
+          // barcode/asset_number are UNIQUE columns. If the sheet gave one code per
+          // serial (comma-separated, same count), split them in parallel so each unit
+          // gets its own code. Otherwise there's no way to tell which unit a single
+          // value belongs to, so only the first expanded unit keeps it — the rest get
+          // assigned later via the Assign Barcodes page.
+          const barcodeList = baseRec.barcode ? String(baseRec.barcode).split(',').map(s => s.trim()).filter(Boolean) : [];
+          const barcodesAlign = barcodeList.length === serials.length;
+
           for (const [serialIdx, serial] of serials.entries()) {
             const assetRec = { ...baseRec, serial_number: serial };
-            // barcode/asset_number are UNIQUE columns — the sheet only gives one code per
-            // row, so only the first expanded unit can keep it; the rest get assigned later
-            // via the Assign Barcodes page.
-            if (serialIdx > 0) { delete assetRec.barcode; delete assetRec.asset_number; }
+            if (barcodesAlign) {
+              assetRec.barcode = barcodeList[serialIdx];
+            } else if (serialIdx > 0) {
+              delete assetRec.barcode;
+            }
+            if (serialIdx > 0) delete assetRec.asset_number;
             if (staged.importAction === 'update' && staged.duplicateId && serial === serials[0]) {
               await apiCall(() => db.entities.Asset.update(staged.duplicateId, assetRec));
               updated++;
