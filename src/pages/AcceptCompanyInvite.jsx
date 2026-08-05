@@ -112,6 +112,23 @@ export default function AcceptCompanyInvite() {
       // Email matches — auto-claim
       setPhase('claiming');
       await claimInvite(token, session.user.user_metadata?.full_name || inv.full_name || '');
+
+      // Verify the membership actually landed before redirecting — the hard
+      // reload below re-runs AuthContext's loadProfile from scratch, and if it
+      // queries before this write is visible, it shows "No Workspace Access".
+      let verified = false;
+      for (let i = 0; i < 12; i++) {
+        const { data: row } = await supabase
+          .from('company_memberships')
+          .select('org_id')
+          .eq('user_id', session.user.id)
+          .eq('status', 'active')
+          .limit(1);
+        if (row?.length) { verified = true; break; }
+        await new Promise(r => setTimeout(r, 400));
+      }
+      if (!verified) throw new Error('Account setup incomplete. Please refresh and try again.');
+
       sessionStorage.removeItem('pending_invite_token');
       sessionStorage.removeItem('pending_invite_path');
       setPhase('success');
@@ -199,6 +216,8 @@ export default function AcceptCompanyInvite() {
   // invite link so the existing session-check logic above claims it —
   // works whether or not the Google account already has a Port 24 login.
   const handleGoogle = async () => {
+    sessionStorage.setItem('pending_invite_token', token);
+    sessionStorage.setItem('pending_invite_path', '/accept-company-invite');
     await supabase.auth.signOut();
     await supabase.auth.signInWithOAuth({
       provider: 'google',

@@ -56,7 +56,7 @@ const navGroups = [
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const { orgId } = useAuth();
+  const { orgId, organization } = useAuth();
 
   const { data: alerts = [] } = useQuery({
     queryKey: ['alerts', orgId],
@@ -65,13 +65,27 @@ export default function MobileNav() {
   });
   const unreadAlerts = alerts.filter(a => !a.is_resolved && !a.is_read).length;
 
+  const { data: brandList = [] } = useQuery({
+    queryKey: ['brand', orgId],
+    queryFn: () => orgId ? db.entities.BrandSettings.filter({ org_id: orgId }) : Promise.resolve([]),
+    staleTime: 10 * 60 * 1000,
+    enabled: !!orgId,
+  });
+  const brand = brandList[0] || {};
+  const workspaceName = organization?.name || 'Port 24';
+
   return (
     <div className="sticky top-0 z-50 bg-sidebar border-b border-sidebar-border px-4 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-          <ScanBarcode className="w-3.5 h-3.5 text-primary-foreground" />
-        </div>
-        <span className="font-bold text-sm tracking-wide text-sidebar-accent-foreground">GEAR TRACK</span>
+      <div className="flex items-center gap-2 min-w-0">
+        {brand.logo_url
+          ? <img src={brand.logo_url} alt="Logo" className="w-7 h-7 rounded-lg object-contain shrink-0" />
+          : (
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
+              <ScanBarcode className="w-3.5 h-3.5 text-primary-foreground" />
+            </div>
+          )
+        }
+        <span className="font-bold text-sm tracking-wide text-sidebar-accent-foreground truncate">{workspaceName}</span>
       </div>
       <div className="flex items-center gap-2">
         {unreadAlerts > 0 && (
@@ -85,11 +99,16 @@ export default function MobileNav() {
           </SheetTrigger>
           <SheetContent side="left" className="bg-sidebar border-sidebar-border w-64 p-0 overflow-y-auto">
             <div className="p-4 border-b border-sidebar-border">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <ScanBarcode className="w-4 h-4 text-primary-foreground" />
-                </div>
-                <span className="font-bold text-sm tracking-wide text-sidebar-accent-foreground">GEAR TRACK</span>
+              <div className="flex items-center gap-2 min-w-0">
+                {brand.logo_url
+                  ? <img src={brand.logo_url} alt="Logo" className="w-8 h-8 rounded-lg object-contain shrink-0" />
+                  : (
+                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+                      <ScanBarcode className="w-4 h-4 text-primary-foreground" />
+                    </div>
+                  )
+                }
+                <span className="font-bold text-sm tracking-wide text-sidebar-accent-foreground truncate">{workspaceName}</span>
               </div>
             </div>
             <nav className="py-3 px-2">
