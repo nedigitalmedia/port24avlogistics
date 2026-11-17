@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/api/supabaseClient';
 import { useAuth } from '@/lib/AuthContext';
@@ -15,7 +16,7 @@ export function usePlan() {
       if (!orgId) return null;
       const { data } = await supabase
         .from('organizations')
-        .select('plan, status')
+        .select('plan, status, trial_ends_at')
         .eq('id', orgId)
         .single();
       return data;
@@ -25,14 +26,27 @@ export function usePlan() {
     refetchInterval: 30 * 1000,
   });
 
+  // Re-evaluate the trial cutoff while the app is open so an expiring trial locks without a reload.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 15 * 1000);
+    return () => clearInterval(t);
+  }, []);
+
   const plan     = org?.plan   ?? 'trial';
   const orgStatus = org?.status ?? 'active';
   const limits   = getPlanLimits(plan);
+
+  // Trials last 72 hours (organizations.trial_ends_at). Only counts once the org row has loaded, so
+  // there is no flash of the locked screen, and a missing end date never locks anyone out.
+  const trialEndsAtMs = org?.plan === 'trial' && org?.trial_ends_at ? new Date(org.trial_ends_at).getTime() : null;
 
   return {
     plan,
     orgStatus,
     isSuspended: orgStatus === 'suspended',
+    trialEndsAt: trialEndsAtMs ? new Date(trialEndsAtMs).toISOString() : null,
+    isTrialExpired: trialEndsAtMs != null && now >= trialEndsAtMs,
     planLabel: PLANS[plan]?.label ?? 'Trial',
     limits,
 

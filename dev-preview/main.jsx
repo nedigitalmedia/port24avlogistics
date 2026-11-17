@@ -5,6 +5,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AppLayout from '@/components/layout/AppLayout';
 import ROUTES from './routes.json';
 import Dashboard from '@/pages/Dashboard';
+import TrialExpiredPage from '@/pages/TrialExpiredPage';
+import { usePlan } from '@/lib/usePlan';
+import { useAuth } from '@/lib/AuthContext';
+// mirrors the gate in App.jsx so the preview can show it
+function TrialGate() { const { isTrialExpired, trialEndsAt } = usePlan(); const { isPlatformAdmin } = useAuth(); return <div data-trial-ends={trialEndsAt || ''}>{isTrialExpired && !isPlatformAdmin ? <TrialExpiredPage /> : <Dashboard />}</div>; }
 const PAGES = import.meta.glob('../src/pages/*.jsx');
 const lazyPage = (name) => React.lazy(PAGES[`../src/pages/${name}.jsx`]);
 class Boundary extends React.Component {
@@ -26,8 +31,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/" element={<TrialGate />} />
+          <Route path="/dashboard" element={<TrialGate />} />
           {ROUTES.filter(([p]) => p !== '/dashboard').map(([p, c]) => {
             if (!PAGES[`../src/pages/${c}.jsx`]) return null;
             const C = lazyPage(c);

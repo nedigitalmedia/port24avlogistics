@@ -156,6 +156,25 @@ export default function PlatformOrgDetail() {
     });
   };
 
+  // Reopen / lengthen a trial. Extends from whichever is later: now or the current end time.
+  const extendTrial = async (hours) => {
+    setActionLoading(true);
+    try {
+      const base = Math.max(Date.now(), org.trial_ends_at ? new Date(org.trial_ends_at).getTime() : 0);
+      const next = new Date(base + hours * 3600 * 1000).toISOString();
+      const { error } = await supabase.from('organizations').update({ trial_ends_at: next }).eq('id', orgId);
+      if (error) throw error;
+      await logAdminAction({ action: 'trial_extended', orgId, oldValue: org.trial_ends_at ?? '', newValue: next });
+      qc.invalidateQueries({ queryKey: ['platform-org', orgId] });
+      qc.invalidateQueries({ queryKey: ['org-plan', orgId] });
+      toast.success(`Trial extended by ${hours >= 24 ? `${hours / 24} days` : `${hours} hours`}`);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const executePlanChange = async () => {
     if (!pending || pending.type !== 'plan') return;
     setActionLoading(true);
@@ -426,6 +445,26 @@ export default function PlatformOrgDetail() {
           )}
         </div>
       </div>
+
+      {org.plan === 'trial' && (() => {
+        const endsMs = org.trial_ends_at ? new Date(org.trial_ends_at).getTime() : null;
+        const expired = endsMs != null && endsMs <= Date.now();
+        const hoursLeft = endsMs != null ? Math.max(0, Math.round((endsMs - Date.now()) / 3600000)) : null;
+        return (
+          <div className={`flex items-center justify-between gap-3 flex-wrap rounded-xl border p-4 mb-8 ${expired ? 'border-red-500/30 bg-red-500/5' : 'border-[#1FB8A0]/20 bg-[#1FB8A0]/5'}`}>
+            <div>
+              <p className="text-xs text-gray-500">Trial (72 hours)</p>
+              <p className={`text-sm font-bold ${expired ? 'text-red-400' : 'text-white'}`}>
+                {endsMs == null ? 'No end date set' : expired ? `Ended ${new Date(endsMs).toLocaleString()} — users are locked out` : `Ends ${new Date(endsMs).toLocaleString()} (${hoursLeft}h left)`}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => extendTrial(72)} disabled={actionLoading} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[#1FB8A0]/30 text-[#1FB8A0] hover:bg-[#1FB8A0]/10 disabled:opacity-50">+72 hours</button>
+              <button onClick={() => extendTrial(168)} disabled={actionLoading} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 text-gray-300 hover:text-white disabled:opacity-50">+7 days</button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Plan limits overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">

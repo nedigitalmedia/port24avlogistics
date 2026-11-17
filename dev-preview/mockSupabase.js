@@ -32,6 +32,12 @@ const ROWS_ON = q.get('rows') === '1' || sessionStorage.getItem('__rows') === '1
 const GENERIC = new Proxy({}, { get: (_t, tbl) => (!ROWS_ON || ['organizations', 'users', 'company_memberships', 'brand_settings'].includes(tbl) ? [] : [0, 1, 2].map((i) => GENERIC_ROW(i, tbl))) });
 const DELETED = new Set();
 const FAILDEL = (q.get('faildel') || '').split(',').filter(Boolean);
+// ?trial=expired | active | soon (ends in 20s) | none (default: paid 'pro' company)
+const TRIAL = q.get('trial') || 'none';
+const TRIAL_END = new Date(Date.now() + ({ expired: -3600e3, active: 50 * 3600e3, soon: 20e3 }[TRIAL] ?? 0)).toISOString(); // fixed at load
+const orgRow = (id) => (TRIAL === 'none'
+  ? { id, plan: 'pro', status: 'active', trial_ends_at: null }
+  : { id, plan: 'trial', status: 'active', trial_ends_at: TRIAL_END });
 class B {
   constructor(table) { this.t = table; this.f = []; this.head = false; this.lim = null; this.ord = []; this.one = false; }
   delete() { this.isDelete = true; return this; }
@@ -59,7 +65,7 @@ class B {
       const hint = this.head ? 'count' : 'window';
       if (FAIL.includes(hint) || FAIL.includes('all')) return { data: null, count: null, error: new Error('simulated failure') };
     }
-    let rows = this.t === 'shows' ? SHOWS.map((r) => ({ ...r, status: r.status })) : (GENERIC[this.t] || []);
+    let rows = this.t === 'organizations' ? [orgRow('org-A'), orgRow('org-B')] : this.t === 'shows' ? SHOWS.map((r) => ({ ...r, status: r.status })) : (GENERIC[this.t] || []);
     // normalize legacy only for the DB-side `in` (the real DB stores legacy keys as-is)
     rows = rows.filter((r) => !DELETED.has(r.id));
     for (const fn of this.f) rows = rows.filter(fn);

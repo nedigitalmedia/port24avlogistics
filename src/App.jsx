@@ -22,6 +22,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import PlatformLogin from './pages/PlatformLogin';
 import PlatformJoin from './pages/PlatformJoin';
 import SuspendedPage from './pages/SuspendedPage';
+import TrialExpiredPage from './pages/TrialExpiredPage';
 
 // ── Lazy-loaded app pages — split into separate chunks ──
 const WorkspacePicker        = lazy(() => import('./pages/WorkspacePicker'));
@@ -199,7 +200,7 @@ const PUBLIC_PATHS = new Set([
 const AuthenticatedApp = () => {
   const location = useLocation();
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, membershipsLoaded, needsCompany, needsWorkspacePick, trialFlow, isPlatformAdmin, user, userRecord, companyMemberships } = useAuth();
-  const { isSuspended } = usePlan();
+  const { isSuspended, isTrialExpired } = usePlan();
 
   if (isLoadingPublicSettings || isLoadingAuth || (isAuthenticated && !membershipsLoaded)) {
     return (
@@ -238,6 +239,15 @@ const AuthenticatedApp = () => {
   // Org suspended — block access and show a support contact page.
   if (isAuthenticated && membershipsLoaded && !isPlatformAdmin && isSuspended) {
     return <SuspendedPage />;
+  }
+
+  // 72-hour trial ended — block the whole workspace with a "reach out to your rep" popup.
+  // Platform admins are exempt; marketing pages and the workspace picker stay reachable.
+  if (
+    isAuthenticated && membershipsLoaded && !isPlatformAdmin && isTrialExpired &&
+    !['/landing', '/privacy', '/terms', '/workspace-picker'].includes(location.pathname)
+  ) {
+    return <TrialExpiredPage />;
   }
 
   // Authenticated but no company membership.
