@@ -41,57 +41,77 @@ function GridBg() {
   );
 }
 
-/* ── Inline UI mockup illustration ── */
+/* ── Inline UI mockup illustration (mirrors the in-app dashboard) ── */
+const PANEL = '#EEF5FB';
+const PANEL_2 = '#E3EDF6';
+const INK = '#0B1F2E';
+const INK_MUTED = '#4B6378';
+
 function HeroMockup() {
+  const kpis = [
+    { label: 'Upcoming shows', value: '7' },
+    { label: 'Active shows', value: '10' },
+    { label: 'Ready to pick', value: '4' },
+    { label: 'Awaiting returns', value: '2' },
+  ];
+  const bars = [1, 2, 1, 1, 1, 1, 2, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1];
+  const rows = [
+    { name: 'Cisco Keynote 2025', meta: 'Jun 12–14 · Moscone West', stage: 'Planning', color: '#6B7280' },
+    { name: 'NFL Draft Experience', meta: 'Jun 18–22 · Navy Pier', stage: 'Picking', color: '#D97706' },
+    { name: 'AWS re:Invent Pre-Show', meta: 'Jun 28 · Venetian Expo', stage: 'Confirmed', color: '#059669' },
+  ];
+  const card = { background: PANEL, color: INK, borderRadius: 12, boxShadow: '0 1px 2px rgba(5,25,40,0.18), 0 12px 28px -16px rgba(0,10,25,0.6)' };
+
   return (
     <div style={{ position: 'relative', width: '100%', maxWidth: 540 }}>
       {/* Glow */}
-      <div style={{ position: 'absolute', inset: -40, background: 'radial-gradient(ellipse at 50% 50%, rgba(31,184,160,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: -40, background: 'radial-gradient(ellipse at 50% 50%, rgba(45,212,191,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-      {/* Main card */}
-      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden', position: 'relative' }}>
+      {/* App window: same teal-to-navy frame and pale panels as the product */}
+      <div style={{ background: 'radial-gradient(420px 220px at 80% -10%, rgba(45,212,191,0.26), transparent 62%), linear-gradient(135deg, #06222d 0%, #0a4458 46%, #0c2d5a 100%)', border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden', position: 'relative' }}>
         {/* Top bar */}
-        <div style={{ background: SURFACE, borderBottom: `1px solid ${BORDER_DIM}`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', opacity: 0.6 }} />
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B', opacity: 0.6 }} />
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', opacity: 0.6 }} />
+        <div style={{ background: 'rgba(4,26,36,0.6)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', opacity: 0.7 }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B', opacity: 0.7 }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', opacity: 0.7 }} />
           <div style={{ flex: 1, height: 1 }} />
-          <div style={{ background: 'rgba(31,184,160,0.1)', border: `1px solid ${BORDER}`, borderRadius: 6, padding: '3px 10px', fontSize: 11, color: T }}>Mission Control</div>
+          <div style={{ background: '#2DD4BF', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: '#04222A' }}>Dashboard</div>
         </div>
 
-        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Show row */}
-          {[
-            { name: 'Cisco Keynote 2025', status: 'On Location', statusColor: T, venue: 'Moscone West', date: 'Jun 12–14', fill: 82 },
-            { name: 'NFL Draft Experience', status: 'Picking', statusColor: '#F59E0B', venue: 'Navy Pier — Chicago', date: 'Jun 18–22', fill: 43 },
-            { name: 'AWS re:Invent Pre-Show', status: 'Confirmed', statusColor: '#818CF8', venue: 'Venetian Expo', date: 'Jun 28', fill: 10 },
-          ].map((show, i) => (
-            <div key={i} style={{ background: SURFACE, borderRadius: 10, padding: '12px 14px', border: `1px solid ${BORDER_DIM}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div>
-                  <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, margin: 0 }}>{show.name}</p>
-                  <p style={{ color: TEXT_MUTED, fontSize: 11, margin: '2px 0 0' }}>{show.venue} · {show.date}</p>
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: show.statusColor, background: `${show.statusColor}18`, border: `1px solid ${show.statusColor}30`, borderRadius: 20, padding: '3px 9px' }}>{show.status}</span>
+        <div style={{ padding: '16px 16px 38px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* KPI tiles */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))', gap: 8 }}>
+            {kpis.map(({ label, value }) => (
+              <div key={label} style={{ ...card, padding: '10px 12px' }}>
+                <p style={{ color: INK_MUTED, fontSize: 10, fontWeight: 600, margin: 0 }}>{label}</p>
+                <p style={{ color: INK, fontSize: 24, fontWeight: 700, margin: '4px 0 0', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{value}</p>
               </div>
-              {/* Gear fill bar */}
-              <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${show.fill}%`, background: show.statusColor, borderRadius: 2, opacity: 0.7 }} />
-              </div>
-              <p style={{ color: TEXT_DIM, fontSize: 10, margin: '4px 0 0' }}>{show.fill}% gear confirmed</p>
-            </div>
-          ))}
+            ))}
+          </div>
 
-          {/* Bottom stat pills */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {[
-              { label: 'Assets out', value: '247', color: T },
-              { label: 'Crew booked', value: '14', color: '#818CF8' },
-              { label: 'Open quotes', value: '3', color: '#F59E0B' },
-            ].map(({ label, value, color }) => (
-              <div key={label} style={{ flex: 1, minWidth: 80, background: SURFACE, border: `1px solid ${BORDER_DIM}`, borderRadius: 8, padding: '8px 12px' }}>
-                <p style={{ color, fontSize: 18, fontWeight: 700, margin: 0 }}>{value}</p>
-                <p style={{ color: TEXT_MUTED, fontSize: 10, margin: '2px 0 0' }}>{label}</p>
+          {/* Schedule chart */}
+          <div style={{ ...card, padding: '12px 14px' }}>
+            <p style={{ fontSize: 12, fontWeight: 700, margin: 0 }}>Show schedule</p>
+            <p style={{ color: INK_MUTED, fontSize: 10, margin: '2px 0 8px' }}>Projects running each day, next 30 days</p>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 56, borderBottom: '1px solid #CFDCE8' }}>
+              {bars.map((v, i) => (
+                <div key={i} style={{ flex: 1, height: v === 0 ? 0 : 14 + v * 18, background: '#0F9D8A', borderRadius: '4px 4px 0 0' }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Project list */}
+          <div style={{ ...card, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, margin: '0 0 2px' }}>Upcoming projects</p>
+            {rows.map((r) => (
+              <div key={r.name} style={{ background: PANEL_2, borderRadius: 8, padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</p>
+                  <p style={{ color: INK_MUTED, fontSize: 10, margin: '1px 0 0' }}>{r.meta}</p>
+                </div>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700, color: INK, background: `${r.color}1f`, border: `1px solid ${r.color}66`, borderRadius: 20, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: r.color }} />{r.stage}
+                </span>
               </div>
             ))}
           </div>
@@ -99,21 +119,21 @@ function HeroMockup() {
       </div>
 
       {/* Floating scan card */}
-      <div style={{ position: 'absolute', bottom: -20, left: -24, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
-        <div style={{ width: 32, height: 32, borderRadius: 8, background: `${T}18`, border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ScanBarcode size={16} color={T} />
+      <div className="lp-float-l" style={{ position: 'absolute', bottom: -20, left: -24, background: PANEL, color: INK, borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 12px 32px rgba(0,10,25,0.5)' }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(15,157,138,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <ScanBarcode size={16} color="#0B7F70" />
         </div>
         <div>
-          <p style={{ color: '#fff', fontSize: 12, fontWeight: 600, margin: 0 }}>Shure AD4D Wireless</p>
-          <p style={{ color: T, fontSize: 11, margin: '1px 0 0' }}>✓ Checked out → Cisco Keynote</p>
+          <p style={{ fontSize: 12, fontWeight: 700, margin: 0 }}>Shure AD4D Wireless</p>
+          <p style={{ color: '#0B7F70', fontSize: 11, fontWeight: 600, margin: '1px 0 0' }}>✓ Checked out → Cisco Keynote</p>
         </div>
       </div>
 
       {/* Floating quote card */}
-      <div style={{ position: 'absolute', top: 60, right: -28, background: CARD, border: `1px solid rgba(129,140,248,0.25)`, borderRadius: 12, padding: '10px 14px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
-        <p style={{ color: TEXT_MUTED, fontSize: 10, margin: '0 0 4px' }}>Quote signed</p>
-        <p style={{ color: '#fff', fontSize: 13, fontWeight: 700, margin: 0 }}>$48,200</p>
-        <p style={{ color: '#818CF8', fontSize: 10, margin: '2px 0 0' }}>NFL Draft Experience</p>
+      <div className="lp-float-r" style={{ position: 'absolute', bottom: -20, right: -24, background: PANEL, color: INK, borderRadius: 12, padding: '10px 14px', boxShadow: '0 12px 32px rgba(0,10,25,0.5)' }}>
+        <p style={{ color: INK_MUTED, fontSize: 10, margin: '0 0 4px' }}>Quote signed</p>
+        <p style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>$48,200</p>
+        <p style={{ color: '#0B7F70', fontSize: 10, fontWeight: 600, margin: '2px 0 0' }}>NFL Draft Experience</p>
       </div>
     </div>
   );
@@ -434,7 +454,7 @@ export default function LandingPage() {
         {/* Ambient orb */}
         <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translate(-50%,-50%)', width: 800, height: 600, background: 'radial-gradient(ellipse, rgba(31,184,160,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center', position: 'relative', zIndex: 1, width: '100%' }}>
+        <div className="lp-two-col" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center', position: 'relative', zIndex: 1, width: '100%' }}>
           <div>
             {/* Pre-label */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '6px 14px', marginBottom: 28, background: 'rgba(31,184,160,0.06)' }}>
@@ -515,7 +535,7 @@ export default function LandingPage() {
       {/* ── FEATURE SECTIONS ── */}
       {FEATURES.map(({ tag, headline, body, bullets, illo, flip }, idx) => (
         <section key={tag} id={tag.toLowerCase().split(' ')[0]} style={{ padding: '100px 24px', borderTop: `1px solid ${BORDER_DIM}`, background: idx % 2 === 0 ? BG : SURFACE }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 72, alignItems: 'center', direction: flip ? 'rtl' : 'ltr' }}>
+          <div className="lp-two-col lp-feature-row" style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 72, alignItems: 'center', direction: flip ? 'rtl' : 'ltr' }}>
             <div style={{ direction: 'ltr' }}>
               <span style={{ color: T, fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{tag}</span>
               <h2 style={{ fontSize: 'clamp(1.5rem, 2.8vw, 2.1rem)', fontWeight: 800, margin: '12px 0 20px', lineHeight: 1.2, letterSpacing: '-0.02em' }}>{headline}</h2>
@@ -578,7 +598,7 @@ export default function LandingPage() {
                     </div>
                     <h3 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{p.label}</h3>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="lp-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     {p.points.map(pt => (
                       <div key={pt} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', background: SURFACE, borderRadius: 10, border: `1px solid ${BORDER_DIM}` }}>
                         <CheckCircle size={13} color={T} style={{ marginTop: 2, flexShrink: 0 }} />
@@ -600,7 +620,7 @@ export default function LandingPage() {
             <p style={{ color: T, fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 12px' }}>Why Port 24</p>
             <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>How it compares</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          <div className="lp-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
             {/* Old way */}
             <div style={{ background: CARD, border: '1px solid rgba(239,68,68,0.15)', borderRadius: 16, padding: 28 }}>
               <p style={{ color: '#EF4444', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 20px' }}>The old way</p>
@@ -702,6 +722,12 @@ export default function LandingPage() {
       </footer>
 
       <style>{`
+        @media (max-width: 860px) {
+          .lp-two-col { grid-template-columns: minmax(0, 1fr) !important; gap: 40px !important; }
+          .lp-feature-row { direction: ltr !important; }
+          .lp-float-l { left: 8px !important; }
+          .lp-float-r { right: 8px !important; }
+        }
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
           .show-mobile { display: block !important; }

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { db } from '@/api/db';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { Plus, CalendarDays, MapPin, User, Trash2, Pencil, FileText, Sparkles } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Plus, CalendarDays, MapPin, User, Trash2, Pencil, FileText, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -11,16 +11,32 @@ import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { usePermissions } from '@/lib/usePermissions';
 import ShowFormDialog from '@/components/shows/ShowFormDialog';
+import { useAuth } from '@/lib/AuthContext';
+import { useStatusFlow } from '@/lib/useStatusFlow';
+import { fetchScheduledProjects } from '@/lib/dashboardQueries';
+import { formatDateRange, parseShowsFilters } from '@/lib/dashboardData';
 
 export default function Shows() {
   const { canEditShows, canAccessFinance, isAdmin, isManagerOrAbove } = usePermissions();
   const [formOpen, setFormOpen] = useState(false);
   const [editingShow, setEditingShow] = useState(null);
   const queryClient = useQueryClient();
+  const { orgId } = useAuth();
+  const { label: stageLabel } = useStatusFlow();
 
-  const { data: shows = [], isLoading } = useQuery({
-    queryKey: ['shows'],
-    queryFn: () => db.entities.Show.list('-start_date', 100),
+  // Dashboard cards link here with ?stage=…&from=…&to=… — same rules the dashboard counts with.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = parseShowsFilters(searchParams);
+  const filterKey = filters ? JSON.stringify(filters) : null;
+
+  const { data: shows = [], isLoading, isError, refetch } = useQuery({
+    queryKey: filters ? ['shows', 'filtered', orgId, filterKey] : ['shows'],
+    queryFn: async () => {
+      if (!filters) return db.entities.Show.list('-start_date', 100);
+      const { rows } = await fetchScheduledProjects(orgId, { stageKeys: filters.stages, window: filters.window, columns: '*' });
+      return rows;
+    },
+    enabled: !filters || !!orgId,
   });
 
   const deleteMutation = useMutation({
@@ -58,12 +74,29 @@ export default function Shows() {
         }
       />
 
+      {filters && (
+        <div className="flex flex-wrap items-center gap-2 mb-4 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm" role="status">
+          <span className="font-medium">Filtered:</span>
+          {filters.stages.length > 0 && <span>{filters.stages.map((k) => stageLabel(k)).join(', ')}</span>}
+          {filters.window && <span className="text-muted-foreground">· {formatDateRange(filters.window.from, filters.window.to)}</span>}
+          {!isLoading && !isError && <span className="text-muted-foreground">· {shows.length} {shows.length === 1 ? 'project' : 'projects'}</span>}
+          <button type="button" className="ml-auto inline-flex items-center gap-1 text-primary hover:underline" onClick={() => setSearchParams({}, { replace: true })}>
+            <X className="w-3.5 h-3.5" /> Clear filter
+          </button>
+        </div>
+      )}
+
       {isLoading ? (
         <p className="text-muted-foreground text-center py-20">Loading shows...</p>
+      ) : isError ? (
+        <Card className="p-12 text-center">
+          <p className="text-destructive mb-3">Couldn&apos;t load shows.</p>
+          <Button variant="outline" onClick={() => refetch()}>Try again</Button>
+        </Card>
       ) : shows.length === 0 ? (
         <Card className="p-12 text-center">
           <CalendarDays className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
-          <p className="text-muted-foreground">No shows yet. Create your first show to get started.</p>
+          <p className="text-muted-foreground">{filters ? 'No projects match this filter.' : 'No shows yet. Create your first show to get started.'}</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

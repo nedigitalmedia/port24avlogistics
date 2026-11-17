@@ -378,6 +378,7 @@ export default function Sidebar() {
                     }
 
                     const isActive = location.pathname === item.path ||
+                      (item.path === '/' && location.pathname === '/dashboard') ||
                       (item.path !== '/' && location.pathname.startsWith(item.path));
                     const alertCount = item.badge === true ? unreadAlerts : item.badge === 'hospital' ? activeHospital : 0;
 
@@ -402,8 +403,8 @@ export default function Sidebar() {
                     );
 
                     return item.external
-                      ? <a key={item.path} href={item.path} className={cls} style={activeStyle}>{inner}</a>
-                      : <Link key={item.path} to={item.path} className={cls} style={activeStyle}>{inner}</Link>;
+                      ? <a key={item.path} href={item.path} className={cls} style={activeStyle} aria-current={isActive ? 'page' : undefined}>{inner}</a>
+                      : <Link key={item.path} to={item.path} className={cls} style={activeStyle} aria-current={isActive ? 'page' : undefined}>{inner}</Link>;
                   })}
                 </div>
               )}

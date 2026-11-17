@@ -9,7 +9,8 @@
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:dashboard": "vite --config dev-preview/vite.config.js"
   },
   "dependencies": {
     "@base44/vite-plugin": "^1.0.21",

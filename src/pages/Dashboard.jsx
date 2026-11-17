@@ -1,15 +1,21 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { db } from '@/api/db';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/shared/PageHeader';
 import DashboardGrid from '@/components/dashboard/DashboardGrid';
 import { DEFAULT_LAYOUTS } from '@/lib/dashboardWidgetRegistry';
 import { useAuth } from '@/lib/AuthContext';
+import DashboardV2 from '@/components/dashboard/v2/DashboardV2';
+
+const VIEW_KEY = 'port24_dashboard_view';
+const readClassic = () => { try { return localStorage.getItem(VIEW_KEY) === 'classic'; } catch { return false; } };
+const writeView = (v) => { try { localStorage.setItem(VIEW_KEY, v); } catch { /* storage unavailable */ } };
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
   const { userRecord } = useAuth();
   const user = userRecord;
+  const [classic, setClassic] = useState(readClassic);
 
   // Load user's saved layout (optional, render default immediately)
   const { data: userDashboard } = useQuery({
@@ -51,11 +57,20 @@ export default function Dashboard() {
     }
   };
 
+  if (!classic) {
+    return <DashboardV2 onClassic={() => { writeView('classic'); setClassic(true); }} />;
+  }
+
   return (
     <div className="space-y-0">
       <PageHeader
         title="Dashboard"
         description="Customizable operations command center"
+        actions={
+          <button type="button" className="text-sm text-primary underline underline-offset-4" onClick={() => { writeView('v2'); setClassic(false); }}>
+            New dashboard
+          </button>
+        }
       />
 
       {layout && (

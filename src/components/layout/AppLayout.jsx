@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import RouteGuard from './RouteGuard';
@@ -6,6 +6,7 @@ import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import BackButton from '@/components/shared/BackButton';
 import AuthDebugPanel from '@/components/dev/AuthDebugPanel';
+import './appShell.css';
 
 const HOME_ROUTES = ['/', '/dashboard'];
 
@@ -17,8 +18,13 @@ function BackButtonBar() {
 }
 
 export default function AppLayout() {
+  // Lets portal-rendered dialogs/selects/menus (outside .p24-shell) use the same pale-panel tokens.
+  useEffect(() => {
+    document.body.classList.add('p24-app');
+    return () => document.body.classList.remove('p24-app');
+  }, []);
   return (
-    <div className="min-h-screen bg-background">
+    <div className="p24-shell">
       <div className="hidden md:block">
         <Sidebar />
       </div>

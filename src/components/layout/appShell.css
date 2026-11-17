@@ -1,0 +1,180 @@
+/*
+ * App shell — the teal-to-navy frame, translucent sidebar and pale-panel look used by EVERY page
+ * inside AppLayout (dashboard, assets, projects, quotes, …).
+ *
+ * How it carries to existing pages without editing each one:
+ *  1. `.p24-shell` re-declares the app's surface tokens (--background, --foreground, --muted, --border …)
+ *     for the dark teal gradient, so plain page text/headers/tabs read correctly on it.
+ *  2. Anything built on `bg-card` (the Card component and most panels) is a pale panel: it re-declares the
+ *     tokens again for a light surface, so text-foreground / text-muted-foreground / border / inputs /
+ *     buttons inside it automatically switch to dark-on-light.
+ *  3. Dialogs, selects, popovers and menus render in a portal outside the shell; `body.p24-app` (set by
+ *     AppLayout) gives them the same pale-surface tokens.
+ * Brand colors (--primary, --ring, --accent at shell level, --primary-foreground) are NOT overridden, so each
+ * company's brand color still shows. Dashboard-only classes live in dashboardV2.css.
+ */
+
+.p24-shell {
+  /* shell */
+  --dv2-shell-from: #06222d;
+  --dv2-shell-mid: #0a4458;
+  --dv2-shell-to: #0c2d5a;
+  --dv2-glow: rgba(45, 212, 191, 0.26);
+  /* panels */
+  --dv2-panel: #eef5fb;
+  --dv2-panel-2: #e3edf6;
+  --dv2-border: rgba(255, 255, 255, 0.6);
+  --dv2-ink: #0b1f2e;
+  --dv2-muted: #4b6378;
+  --dv2-grid-line: #cfdce8;
+  --dv2-accent: #0f9d8a;
+  --dv2-accent-strong: #0b7f70;
+  --dv2-danger: #b42318;
+  /* rhythm */
+  --dv2-radius: 16px;
+  --dv2-gap: 14px;
+  --dv2-pad: 18px;
+  --dv2-shadow: 0 1px 2px rgba(5, 25, 40, 0.18), 0 14px 32px -18px rgba(0, 10, 25, 0.55);
+
+  /* app tokens on the gradient (dark surface) */
+  --background: 197 62% 9%;
+  --foreground: 200 30% 96%;
+  --card: 208 60% 96%;
+  /* light here on purpose: tinted callouts (bg-primary/5, bg-amber-500/10…) sit on the dark gradient; real pale panels re-declare it dark below */
+  --card-foreground: 200 30% 96%;
+  --popover: 197 50% 12%;
+  --popover-foreground: 200 30% 96%;
+  --muted: 197 40% 17%;
+  --muted-foreground: 198 25% 78%;
+  --secondary: 197 38% 20%;
+  --secondary-foreground: 200 30% 92%;
+  --border: 195 30% 28%;
+  --input: 195 30% 30%;
+
+  background:
+    radial-gradient(900px 520px at 78% -8%, var(--dv2-glow), transparent 62%),
+    linear-gradient(135deg, var(--dv2-shell-from) 0%, var(--dv2-shell-mid) 46%, var(--dv2-shell-to) 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: hsl(var(--foreground));
+}
+
+/* page background behind the shell (overscroll, short pages) matches the gradient */
+body.p24-app { background-color: #06222d; }
+
+/* ── sidebar / mobile bar: glass, with a filled active route ─────────────────── */
+.p24-shell .bg-sidebar {
+  background: rgba(4, 26, 36, 0.72);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.p24-shell aside a[aria-current='page'],
+.p24-shell aside a[aria-current='page'] svg {
+  color: #04222a !important;
+}
+.p24-shell aside a[aria-current='page'] {
+  background: #2dd4bf !important;
+  font-weight: 700;
+  box-shadow: 0 6px 18px -8px rgba(45, 212, 191, 0.7);
+}
+
+/* ── pale panels: every bg-card surface, plus popups rendered in portals ─────── */
+.p24-shell .bg-card,
+.p24-shell [class*='bg-card/'],
+.p24-shell .bg-white,
+.p24-shell [class~='bg-gray-50'],
+.p24-shell [class~='bg-gray-100'],
+.p24-shell [class~='bg-slate-50'],
+.p24-shell [class~='bg-slate-100'],
+.p24-shell .bg-blue-50,
+.p24-shell .bg-green-50,
+.p24-shell .bg-emerald-50,
+.p24-shell .bg-amber-50,
+.p24-shell .bg-yellow-50,
+.p24-shell .bg-red-50,
+.p24-shell .bg-rose-50,
+.p24-shell .bg-purple-50,
+.p24-shell .bg-orange-50,
+.p24-shell .bg-teal-50,
+.p24-shell .bg-sky-50,
+.p24-shell .bg-indigo-50,
+body.p24-app [role='dialog']:not(.bg-sidebar),
+body.p24-app [role='alertdialog'],
+body.p24-app [role='listbox'],
+body.p24-app [role='menu'],
+body.p24-app [data-radix-popper-content-wrapper] > * {
+  --background: 0 0% 100%;
+  --foreground: 210 45% 11%;
+  --card: 208 60% 96%;
+  --card-foreground: 210 45% 11%;
+  --popover: 208 60% 98%;
+  --popover-foreground: 210 45% 11%;
+  --muted: 208 40% 91%;
+  --muted-foreground: 210 20% 34%;
+  --secondary: 208 35% 91%;
+  --secondary-foreground: 210 40% 15%;
+  --accent: 208 45% 88%;
+  --accent-foreground: 210 45% 11%;
+  --border: 208 25% 80%;
+  --input: 208 25% 76%;
+  color: hsl(var(--card-foreground));
+}
+.p24-shell [class*='bg-card/'] { background-color: hsl(var(--card)); }
+.p24-shell .bg-card {
+  border-color: rgba(255, 255, 255, 0.6);
+  border-radius: var(--dv2-radius);
+  box-shadow: var(--dv2-shadow);
+}
+body.p24-app [role='dialog']:not(.bg-sidebar),
+body.p24-app [role='alertdialog'] {
+  background-color: hsl(var(--card));
+  border-radius: var(--dv2-radius);
+}
+/* brand-colored links/text stay on-brand but get enough contrast on a light panel */
+.p24-shell .bg-card .text-primary,
+body.p24-app [role='dialog']:not(.bg-sidebar) .text-primary {
+  color: color-mix(in srgb, hsl(var(--primary)) 62%, #000);
+}
+
+
+
+/* ── readable palette text ────────────────────────────────────────────────────
+ * Tailwind palette text colors in this app were chosen for the old dark surfaces.
+ * 1) directly on the dark gradient: lift the dim ones;
+ * 2) inside a pale panel (descendant OR same element): darken them.
+ */
+.p24-shell .text-amber-500, .p24-shell .text-amber-600 { color: #fbbf24; }
+.p24-shell .text-emerald-500, .p24-shell .text-emerald-600 { color: #34d399; }
+.p24-shell .text-rose-500, .p24-shell .text-rose-600, .p24-shell .text-red-500, .p24-shell .text-red-600 { color: #fb7185; }
+.p24-shell .text-blue-500, .p24-shell .text-blue-600 { color: #60a5fa; }
+.p24-shell .text-orange-500, .p24-shell .text-orange-600 { color: #fb923c; }
+.p24-shell .text-teal-600 { color: #2dd4bf; }
+.p24-shell .text-blue-800, .p24-shell .text-blue-900, .p24-shell [class*='text-blue-800/'], .p24-shell [class*='text-blue-900/'] { color: #bfdbfe; }
+.p24-shell .text-amber-800, .p24-shell .text-amber-900, .p24-shell .text-yellow-800, .p24-shell .text-yellow-900 { color: #fde68a; }
+.p24-shell .text-green-800, .p24-shell .text-green-900, .p24-shell .text-emerald-800, .p24-shell .text-emerald-900 { color: #a7f3d0; }
+.p24-shell .text-red-800, .p24-shell .text-red-900, .p24-shell .text-rose-800, .p24-shell .text-rose-900 { color: #fecaca; }
+.p24-shell .text-slate-400, .p24-shell .text-gray-400, .p24-shell .text-slate-500, .p24-shell .text-gray-500 { color: #cbd5e1; }
+/* faint secondary text (text-muted-foreground/40 …) keeps a readable floor */
+.p24-shell [class*='text-muted-foreground/'] { color: hsl(var(--muted-foreground) / 0.7); }
+
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-amber-300, .text-amber-400, .text-amber-500, .text-amber-600), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-amber-300, .text-amber-400, .text-amber-500, .text-amber-600) { color: #92400e; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-yellow-300, .text-yellow-400, .text-yellow-500, .text-yellow-600), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-yellow-300, .text-yellow-400, .text-yellow-500, .text-yellow-600) { color: #854d0e; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-emerald-300, .text-emerald-400, .text-emerald-500, .text-emerald-600, .text-green-400, .text-green-500, .text-green-600), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-emerald-300, .text-emerald-400, .text-emerald-500, .text-emerald-600, .text-green-400, .text-green-500, .text-green-600) { color: #047857; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-blue-300, .text-blue-400, .text-blue-500, .text-blue-600, .text-sky-400, .text-sky-500, .text-indigo-400, .text-indigo-500), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-blue-300, .text-blue-400, .text-blue-500, .text-blue-600, .text-sky-400, .text-sky-500, .text-indigo-400, .text-indigo-500) { color: #1d4ed8; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-rose-400, .text-rose-500, .text-rose-600, .text-red-400, .text-red-500, .text-red-600, .text-pink-500), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-rose-400, .text-rose-500, .text-rose-600, .text-red-400, .text-red-500, .text-red-600, .text-pink-500) { color: #b91c1c; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-orange-400, .text-orange-500, .text-orange-600), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-orange-400, .text-orange-500, .text-orange-600) { color: #c2410c; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-purple-400, .text-purple-500, .text-violet-400, .text-violet-500, .text-fuchsia-500), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-purple-400, .text-purple-500, .text-violet-400, .text-violet-500, .text-fuchsia-500) { color: #6d28d9; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-teal-300, .text-teal-400, .text-teal-500, .text-teal-600, .text-teal-700, .text-cyan-400, .text-cyan-500), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-teal-300, .text-teal-400, .text-teal-500, .text-teal-600, .text-teal-700, .text-cyan-400, .text-cyan-500) { color: #0f766e; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-slate-300, .text-slate-400, .text-slate-500, .text-gray-300, .text-gray-400, .text-gray-500, .text-zinc-400, .text-zinc-500), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-slate-300, .text-slate-400, .text-slate-500, .text-gray-300, .text-gray-400, .text-gray-500, .text-zinc-400, .text-zinc-500) { color: #475569; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-blue-800, .text-blue-900, [class*='text-blue-800/']), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-blue-800, .text-blue-900, [class*='text-blue-800/']) { color: #1e3a8a; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-amber-800, .text-amber-900, .text-yellow-800, .text-yellow-900), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-amber-800, .text-amber-900, .text-yellow-800, .text-yellow-900) { color: #78350f; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-green-800, .text-green-900, .text-emerald-800, .text-emerald-900), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-green-800, .text-green-900, .text-emerald-800, .text-emerald-900) { color: #064e3b; }
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(.text-red-800, .text-red-900, .text-rose-800, .text-rose-900), :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']):is(.text-red-800, .text-red-900, .text-rose-800, .text-rose-900) { color: #7f1d1d; }
+/* white headings left over from dark-only bars read dark on pale bars (own class or inherited from a .text-white wrapper) */
+:is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) :is(h1, h2, h3, h4).text-white, :is(.p24-shell .bg-card, .p24-shell [class*='bg-card/'], .p24-shell .bg-white, .p24-shell [class~='bg-gray-50'], .p24-shell [class~='bg-gray-100'], .p24-shell [class~='bg-slate-50'], .p24-shell [class~='bg-slate-100'], .p24-shell .bg-blue-50, .p24-shell .bg-green-50, .p24-shell .bg-emerald-50, .p24-shell .bg-amber-50, .p24-shell .bg-yellow-50, .p24-shell .bg-red-50, .p24-shell .bg-rose-50, .p24-shell .bg-purple-50, .p24-shell .bg-orange-50, .p24-shell .bg-teal-50, .p24-shell .bg-sky-50, .p24-shell .bg-indigo-50, body.p24-app [role='dialog']:not(.bg-sidebar), body.p24-app [role='alertdialog']) .text-white :is(h1, h2, h3, h4) { color: hsl(var(--card-foreground)); }
+
+/* ── print: no gradient ──────────────────────────────────────────────────── */
+@media print {
+  .p24-shell { background: #fff !important; color: #000; }
+}
