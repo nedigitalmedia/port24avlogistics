@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import StatusBadge from '@/components/shared/StatusBadge';
 import AssetFormDialog from '@/components/assets/AssetFormDialog';
 import CategoryTree, { buildTree, getDescendantIds } from '@/components/categories/CategoryTree';
@@ -256,6 +257,52 @@ export default function Assets() {
 
   const allItems = [...assets, ...kitRows];
 
+  // ── Bulk delete: removes exactly the rows ticked in the table (assets and kits) ──
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const selectedItems = allItems.filter(a => selectedIds.has(a.id));
+  // collapse repeated names so a grouped row reads "Wireless Mic Kit × 12" instead of 12 identical lines
+  const bulkDeleteSummary = useMemo(() => {
+    const groups = new Map();
+    for (const a of selectedItems) {
+      const label = `${a.name || 'Unnamed'}${a._isKit ? ' (kit)' : ''}`;
+      groups.set(label, (groups.get(label) || 0) + 1);
+    }
+    return [...groups].map(([label, count]) => ({ label, count }));
+  }, [selectedItems]);
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (items) => {
+      const result = { deleted: [], failed: [] };
+      const queue = [...items];
+      // a few at a time so hundreds of rows don't fire hundreds of requests at once
+      const worker = async () => {
+        while (queue.length) {
+          const item = queue.shift();
+          try {
+            await (item._isKit ? db.entities.Kit.delete(item.id) : db.entities.Asset.delete(item.id));
+            result.deleted.push(item.id);
+          } catch (err) {
+            result.failed.push({ id: item.id, name: item.name, message: err?.message || 'Delete failed' });
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(6, items.length) }, worker));
+      return result;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      queryClient.invalidateQueries({ queryKey: ['kits'] });
+      // keep only the ones that failed selected, so they can be retried or inspected
+      setSelectedIds(new Set(result.failed.map(f => f.id)));
+      if (result.failed.length === 0) {
+        toast.success(`Deleted ${result.deleted.length} ${result.deleted.length === 1 ? 'item' : 'items'}`);
+      } else {
+        toast.error(`Deleted ${result.deleted.length}, but ${result.failed.length} couldn't be deleted: ${result.failed[0].message}`);
+      }
+    },
+    onError: (err) => toast.error(`Delete failed: ${err?.message || 'unknown error'}`),
+    onSettled: () => setBulkDeleteOpen(false),
+  });
+
   const filtered = allItems.filter(a => {
     const s = search.toLowerCase();
     const matchSearch = !search ||
@@ -339,6 +386,46 @@ export default function Assets() {
               <Button variant="outline" onClick={() => setLabelPrinterOpen(true)}>
                 <Printer className="w-4 h-4 mr-2" /> Print Labels ({selectedIds.size})
               </Button>
+            )}
+            {canManageEquipment && selectedItems.length > 0 && (
+              <AlertDialog open={bulkDeleteOpen} onOpenChange={(v) => { if (!bulkDeleteMutation.isPending) setBulkDeleteOpen(v); }}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">
+                    <Trash2 className="w-4 h-4 mr-2" /> Delete ({selectedItems.length})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete {selectedItems.length} selected {selectedItems.length === 1 ? 'item' : 'items'}?</AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-3 text-sm">
+                        <p>This permanently deletes the selected equipment and cannot be undone.</p>
+                        <ul className="list-disc pl-5 max-h-40 overflow-y-auto">
+                          {bulkDeleteSummary.slice(0, 8).map(g => (
+                            <li key={g.label}>{g.label}{g.count > 1 ? ` × ${g.count}` : ''}</li>
+                          ))}
+                          {bulkDeleteSummary.length > 8 && <li>…and {bulkDeleteSummary.length - 8} more</li>}
+                        </ul>
+                        {selectedItems.some(a => !filtered.some(f => f.id === a.id)) && (
+                          <p className="font-medium text-destructive">
+                            {selectedItems.filter(a => !filtered.some(f => f.id === a.id)).length} of these are hidden by your current search or filters.
+                          </p>
+                        )}
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      disabled={bulkDeleteMutation.isPending}
+                      onClick={(e) => { e.preventDefault(); bulkDeleteMutation.mutate(selectedItems); }}
+                      className="bg-destructive text-destructive-foreground"
+                    >
+                      {bulkDeleteMutation.isPending ? 'Deleting…' : `Delete ${selectedItems.length}`}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
             {canManageEquipment && (
               <Button onClick={() => setWizardOpen(true)}>

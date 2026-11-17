@@ -27,11 +27,14 @@ const SHOWS = EMPTY ? [] : [
   mk('B', 3, 'Other Co Return Job', 'returning', -2, -1, 'Their Site'),
 ];
 const LEGACY = { planned: 'planning', load_out: 'on_truck', on_site: 'on_location', strike: 'needs_return', returned: 'returning', completed: 'finished' };
-const GENERIC_ROW = (i) => ({ id: `g-${i}`, org_id: 'org-A', name: ['Wireless Mic Kit', 'LED Wall Panel', 'Console'][i], title: 'Sample', status: ['available', 'checked_out', 'active'][i], category: 'Audio', manufacturer: 'Acme', model: 'X' + i, quantity: 4 + i, total: 1200 * (i + 1), amount: 500, price: 250, rate: 85, email: 'pat@example.com', phone: '555-0100', city: 'Chicago', client_name: 'Client Co', description: 'Sample description text', created_at: new Date().toISOString(), created_date: new Date().toISOString(), start_date: D(3), end_date: D(5), serial_numbers: [], barcode: 'NE0000' + i, asset_number: 'NE0000' + i });
+const GENERIC_ROW = (i, tbl = 't') => ({ id: `${tbl}-${i}`, org_id: 'org-A', name: ['Wireless Mic Kit', 'LED Wall Panel', 'Console'][i], title: 'Sample', status: ['available', 'checked_out', 'active'][i], category: 'Audio', manufacturer: 'Acme', model: 'X' + i, quantity: 4 + i, total: 1200 * (i + 1), amount: 500, price: 250, rate: 85, email: 'pat@example.com', phone: '555-0100', city: 'Chicago', client_name: 'Client Co', description: 'Sample description text', created_at: new Date().toISOString(), created_date: new Date().toISOString(), start_date: D(3), end_date: D(5), serial_numbers: [], barcode: 'NE0000' + i, asset_number: 'NE0000' + i });
 const ROWS_ON = q.get('rows') === '1' || sessionStorage.getItem('__rows') === '1';
-const GENERIC = new Proxy({}, { get: (_t, tbl) => (!ROWS_ON || ['organizations', 'users', 'company_memberships', 'brand_settings'].includes(tbl) ? [] : [0, 1, 2].map(GENERIC_ROW)) });
+const GENERIC = new Proxy({}, { get: (_t, tbl) => (!ROWS_ON || ['organizations', 'users', 'company_memberships', 'brand_settings'].includes(tbl) ? [] : [0, 1, 2].map((i) => GENERIC_ROW(i, tbl))) });
+const DELETED = new Set();
+const FAILDEL = (q.get('faildel') || '').split(',').filter(Boolean);
 class B {
   constructor(table) { this.t = table; this.f = []; this.head = false; this.lim = null; this.ord = []; this.one = false; }
+  delete() { this.isDelete = true; return this; }
   select(_c, o) { if (o?.head) this.head = true; this.count = !!o?.count; return this; }
   eq(k, v) { this.f.push((r) => r[k] === v); return this; }
   in(k, v) { this.f.push((r) => v.includes(r[k])); return this; }
@@ -58,7 +61,12 @@ class B {
     }
     let rows = this.t === 'shows' ? SHOWS.map((r) => ({ ...r, status: r.status })) : (GENERIC[this.t] || []);
     // normalize legacy only for the DB-side `in` (the real DB stores legacy keys as-is)
+    rows = rows.filter((r) => !DELETED.has(r.id));
     for (const fn of this.f) rows = rows.filter(fn);
+    if (this.isDelete) {
+      for (const r of rows) { if (FAILDEL.includes(r.id)) return { data: null, error: new Error('update or delete violates foreign key constraint') }; DELETED.add(r.id); }
+      return { data: null, error: null };
+    }
     for (const [k, asc] of [...this.ord].reverse()) rows.sort((a, b) => (String(a[k]) < String(b[k]) ? -1 : String(a[k]) > String(b[k]) ? 1 : 0) * (asc ? 1 : -1));
     const total = rows.length;
     if (this.lim != null) rows = rows.slice(0, this.lim);
