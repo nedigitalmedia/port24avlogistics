@@ -3,23 +3,24 @@
 export const PLAN_ORDER = ['trial', 'starter', 'pro', 'enterprise'];
 
 export const PLANS = {
+  // Trial = full product, no limits. Trial users can click through and use every feature.
   trial: {
     label: 'Trial',
     price: 'Free',
     // Numeric limits (null = unlimited)
-    users_limit: 3,
-    assets_limit: 50,
-    shows_limit: 5,
+    users_limit: null,
+    assets_limit: null,
+    shows_limit: null,
     // Feature flags
-    branding: 'none',          // none | logo_only | full
-    quotes_invoices: false,
-    qr_scanning: false,
-    crew_management: false,
-    av_hospital: false,
-    yearly_review: false,
-    financial_reports: false,
-    api_integrations: false,
-    priority_support: false,
+    branding: 'full',          // none | logo_only | full
+    quotes_invoices: true,
+    qr_scanning: true,
+    crew_management: true,
+    av_hospital: true,
+    yearly_review: true,
+    financial_reports: true,
+    api_integrations: true,
+    priority_support: true,
   },
   starter: {
     label: 'Starter',
@@ -211,7 +212,8 @@ export function canUseFeature(plan, featureKey) {
   const currentPlan = plan ?? 'trial';
   const reqPlan = requiredPlanFor(featureKey);
 
-  if (planTier(currentPlan) >= planTier(reqPlan)) {
+  // Trial has no restrictions: every feature is available, including Enterprise-only ones.
+  if (currentPlan === 'trial' || planTier(currentPlan) >= planTier(reqPlan)) {
     return {
       allowed: true,
       current_plan: currentPlan,
