@@ -4,14 +4,14 @@ import { ArrowLeft } from 'lucide-react';
 
 const HOME_ROUTES = ['/', '/dashboard'];
 
-export default function BackButton({ fallback = '/', label = 'Back' }) {
+export default function BackButton({ to, fallback = '/', label = 'Back' }) {
   const navigate = useNavigate();
 
   const handleBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate(fallback);
+      navigate(to || fallback);
     }
   };
 

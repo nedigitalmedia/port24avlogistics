@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, matchPath } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import RouteGuard from './RouteGuard';
 import Sidebar from './Sidebar';
@@ -10,10 +10,18 @@ import './appShell.css';
 
 const HOME_ROUTES = ['/', '/dashboard'];
 
+// Pages that already render their own back link ("Back to Clients", "Templates", a header arrow…).
+// The generic "Back" is hidden there so only one back button shows.
+const OWN_BACK_ROUTES = [
+  '/clients/:id', '/venues/:id', '/smart-builder', '/fulfillment-calibration',
+  '/quote-template-builder', '/yearly-review/:id', '/qr-label-builder', '/truck-pack/:showId',
+];
+
 function BackButtonBar() {
   const location = useLocation();
   const isHome = HOME_ROUTES.includes(location.pathname);
   if (isHome) return null;
+  if (OWN_BACK_ROUTES.some(pattern => matchPath({ path: pattern, end: true }, location.pathname))) return null;
   return <BackButton fallback="/" />;
 }
 
