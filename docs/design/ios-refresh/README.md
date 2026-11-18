@@ -24,3 +24,7 @@ Grand Summit, 15 units in 3 rooms, 2 days, $2,890.00 show total. 12 picked at st
 * Walkthrough panels are **renditions built from the same sample data with the product's own wording**, not screenshots of the live app.
 * The app sidebar, MobileNav, PageTransition and appShell.css were read for tokens but not changed.
 * The clip is a recorded Chrome run with an injected cursor overlay (recording only, not in the app). WebM only; this machine's ffmpeg build has no GIF encoder.
+
+## Full icon set (added after the first review)
+`src/components/icons/`: 58 symbols in the reference's groups (Operations, Inventory, People & places, Finance & documents, Warehouse & project actions, Workspace & admin, Common controls). 47 are custom drawings (the first three plus 44 new); Physical Kit is the Road Case and Assets is the Rack. The 10 common controls and Settings stay standard lucide icons at the same stroke. Use `<Port24Icon name="roadCase" size={20} />`; names are the keys of `PORT24_ICONS` / `UTILITY_ICONS`. Sheet: `docs/design/ios-refresh/icons.html` (regenerate with `node scripts/design/icon_sheet.mjs`).
+The icons are **not yet swapped into the app sidebar or other screens**; that is a separate, wider change.
