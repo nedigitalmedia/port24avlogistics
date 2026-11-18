@@ -17,11 +17,8 @@ function Port24Logo() {
 }
 
 async function loadInvite(token) {
-  const { data, error } = await supabase
-    .from('pending_invites')
-    .select('*, organizations(name, plan)')
-    .eq('token', token)
-    .single();
+  // Signed-out visitors can only fetch the ONE invite they hold the secret token for (RLS no longer lists invites).
+  const { data, error } = await supabase.rpc('get_invite_by_token', { p_token: token });
   if (error || !data) throw new Error('Invite not found. It may have already been used or the link is incorrect.');
   // 'accepted' is allowed here — the component may remount after auth state settles and the
   // edge function handles already-accepted invites idempotently (ensures users row + membership).

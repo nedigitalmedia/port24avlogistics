@@ -21,11 +21,8 @@ const TEXT_MUTED = '#6B7A92';
 // invalid   — invite not found / expired / wrong type
 
 async function loadInvite(token) {
-  const { data, error } = await supabase
-    .from('pending_invites')
-    .select('*, organizations(name)')
-    .eq('token', token)
-    .single();
+  // Signed-out visitors can only fetch the ONE invite they hold the secret token for (RLS no longer lists invites).
+  const { data, error } = await supabase.rpc('get_invite_by_token', { p_token: token });
   if (error || !data) throw new Error('Invite not found. It may have already been used or the link is incorrect.');
   if (data.status !== 'pending') throw new Error(`This invite has already been ${data.status}.`);
   if (new Date(data.expires_at) < new Date()) throw new Error('This invite link has expired. Ask your admin to send a new one.');
